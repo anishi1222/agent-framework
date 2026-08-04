@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-003",
+  "kind": "tool-loop",
+  "description": "Multiple calls execute once each while results retain model call order.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-a", "name": "first", "arguments": {"value": 1}},
+    {"sequence": 1, "type": "functionCall", "callId": "call-b", "name": "second", "arguments": {"value": 2}},
+    {"sequence": 2, "type": "toolInvoked", "callId": "call-a"},
+    {"sequence": 3, "type": "toolInvoked", "callId": "call-b"},
+    {"sequence": 4, "type": "functionResult", "callId": "call-a", "result": 2},
+    {"sequence": 5, "type": "functionResult", "callId": "call-b", "result": 4},
+    {"sequence": 6, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "invocationCounts": {"call-a": 1, "call-b": 1},
+    "resultOrder": ["call-a", "call-b"],
+    "parallelExecutionPermitted": true,
+    "terminalCount": 1
+  }
+}

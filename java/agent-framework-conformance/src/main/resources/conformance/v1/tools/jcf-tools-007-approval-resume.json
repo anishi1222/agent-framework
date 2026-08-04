@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-007",
+  "kind": "tool-loop",
+  "description": "Approval interrupts before execution and an approved decision resumes exactly once.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-approval", "name": "write"},
+    {"sequence": 1, "type": "approvalRequested", "approvalId": "approval-001", "callId": "call-approval"},
+    {"sequence": 2, "type": "terminal", "outcome": "inputRequired"},
+    {"sequence": 3, "type": "approvalDecision", "approvalId": "approval-001", "approved": true},
+    {"sequence": 4, "type": "toolInvoked", "callId": "call-approval"},
+    {"sequence": 5, "type": "functionResult", "callId": "call-approval", "result": "written"},
+    {"sequence": 6, "type": "assistantMessage", "text": "completed"},
+    {"sequence": 7, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "invocationsBeforeApproval": 0,
+    "invocationsAfterApproval": 1,
+    "resultPrecedesAssistantText": true,
+    "callerInputMutated": false,
+    "logicalRunResumed": true
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-003",
+  "kind": "contract",
+  "description": "Agent, chat, and function middleware execute in nesting order and termination stops later work.",
+  "input": {
+    "pipeline": ["agent.before", "chat.before", "function.before", "function.after", "chat.after", "agent.after"],
+    "terminationAt": "function.before"
+  },
+  "expected": {
+    "normalOrder": ["agent.before", "chat.before", "function.before", "function.after", "chat.after", "agent.after"],
+    "terminatedOrder": ["agent.before", "chat.before", "function.before"],
+    "modelCallsAfterTermination": 0,
+    "toolInvocationsAfterTermination": 0
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-001",
+  "kind": "contract",
+  "description": "OpenAI-family adapters preserve provider-neutral message, tool, streaming, error, and cancellation observations.",
+  "input": {
+    "request": {
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "tools": [{"name": "lookup"}],
+      "stream": true
+    },
+    "provider": "openai"
+  },
+  "expected": {
+    "requestRoleOrder": ["user"],
+    "toolNames": ["lookup"],
+    "streamingUpdatesAggregate": true,
+    "typedErrorsPreserved": true,
+    "cancellationPropagated": true,
+    "providerTypesInSharedApi": false
+  }
+}

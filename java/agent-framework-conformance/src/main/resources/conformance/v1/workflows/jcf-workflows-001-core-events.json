@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-001",
+  "kind": "workflow-trace",
+  "description": "A built workflow invokes its start and terminal executors and emits one successful terminal event.",
+  "events": [
+    {"sequence": 0, "type": "workflowStarted", "workflowId": "workflow-001"},
+    {"sequence": 1, "type": "executorInvoked", "executorId": "start", "input": "hello"},
+    {"sequence": 2, "type": "executorCompleted", "executorId": "start", "outputs": ["hello-processed"]},
+    {"sequence": 3, "type": "executorInvoked", "executorId": "finish", "input": "hello-processed"},
+    {"sequence": 4, "type": "workflowOutput", "executorId": "finish", "value": "done"},
+    {"sequence": 5, "type": "executorCompleted", "executorId": "finish"},
+    {"sequence": 6, "type": "terminal", "outcome": "idle"}
+  ],
+  "expected": {
+    "executorOrder": ["start", "finish"],
+    "outputs": ["done"],
+    "terminalCount": 1,
+    "terminalOutcome": "idle"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-002",
+  "kind": "contract",
+  "description": "Context providers contribute ordered messages while run metadata remains immutable.",
+  "input": {
+    "providerResults": [
+      {"providerId": "history", "messages": [{"role": "user", "text": "earlier"}]},
+      {"providerId": "memory", "messages": [{"role": "system", "text": "remembered"}]}
+    ],
+    "metadata": {"agentId": "agent-001", "runId": "run-001"}
+  },
+  "expected": {
+    "providerOrder": ["history", "memory"],
+    "messageOrder": ["earlier", "remembered"],
+    "metadata": {"agentId": "agent-001", "runId": "run-001"},
+    "callerMetadataUnchanged": true
+  }
+}

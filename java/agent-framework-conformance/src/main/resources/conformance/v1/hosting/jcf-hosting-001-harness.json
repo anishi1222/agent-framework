@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HOSTING-001",
+  "kind": "contract",
+  "description": "The test harness loads language-neutral cases without owning routes, authentication, or production state.",
+  "input": {
+    "fixtureSchemaVersion": 1,
+    "executionMode": "testSupportOnly",
+    "applicationResponsibilities": ["routing", "authentication", "authorization", "durableStorage"]
+  },
+  "expected": {
+    "manifestIndexed": true,
+    "fixturesValidated": true,
+    "runtimeDependencyOfPublishedModules": false,
+    "publishedArtifact": false,
+    "routesOwnedByHarness": false
+  }
+}

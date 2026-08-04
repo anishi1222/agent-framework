@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SESSIONS-003",
+  "kind": "session-snapshot",
+  "description": "Loaded and saved session snapshots are detached from caller mutation.",
+  "envelope": {
+    "format": "agent-framework-java-state",
+    "documentKind": "agent-session",
+    "payloadVersion": 1,
+    "payload": {"sessionId": "session-detached", "state": {"values": ["original"]}}
+  },
+  "operations": [
+    {"operation": "save", "expectedRevision": 0},
+    {"operation": "mutateCallerCopy", "append": "changed"},
+    {"operation": "load"},
+    {"operation": "mutateLoadedCopy", "append": "changed-again"},
+    {"operation": "load"}
+  ],
+  "expected": {
+    "firstLoadValues": ["original"],
+    "secondLoadValues": ["original"],
+    "storedStateDetached": true
+  }
+}

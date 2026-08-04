@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-001",
+  "kind": "message-content",
+  "description": "Message roles and ordered content variants remain observable without provider types.",
+  "input": {
+    "messages": [
+      {
+        "role": "user",
+        "contents": [
+          {"kind": "text", "text": "inspect"},
+          {"kind": "data", "mediaType": "image/png", "uri": "data:image/png;base64,aGVsbG8="}
+        ]
+      },
+      {
+        "role": "assistant",
+        "contents": [
+          {"kind": "reasoning", "id": "reasoning-001", "text": "use the tool"},
+          {"kind": "functionCall", "callId": "call-001", "name": "inspect", "arguments": {"value": 7}}
+        ]
+      },
+      {
+        "role": "tool",
+        "contents": [{"kind": "functionResult", "callId": "call-001", "result": {"accepted": true}}]
+      }
+    ]
+  },
+  "expected": {
+    "roles": ["user", "assistant", "tool"],
+    "contentKinds": ["text", "data", "reasoning", "functionCall", "functionResult"],
+    "assistantText": "",
+    "callResultPairs": [{"callId": "call-001", "resultCount": 1}]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-002",
+  "kind": "response-aggregation",
+  "description": "Ordered updates aggregate into one deterministic response with text, usage, and finish reason.",
+  "input": {
+    "updates": [
+      {"sequence": 0, "role": "assistant", "contents": [{"kind": "text", "text": "hello "}]},
+      {"sequence": 1, "role": "assistant", "contents": [{"kind": "text", "text": "world"}]},
+      {"sequence": 2, "usage": {"inputTokens": 3, "outputTokens": 2}, "finishReason": "stop"}
+    ]
+  },
+  "expected": {
+    "messageCount": 1,
+    "role": "assistant",
+    "text": "hello world",
+    "usage": {"inputTokens": 3, "outputTokens": 2},
+    "finishReason": "stop",
+    "updateSequences": [0, 1, 2]
+  }
+}

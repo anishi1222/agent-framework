@@ -44,6 +44,16 @@ updates:
       - "python"
       - "dependencies"
 
+  # Maintain dependencies for Java / Gradle.
+  - package-ecosystem: "gradle"
+    directory: "java/"
+    schedule:
+      interval: "weekly"
+      day: "thursday"
+    labels:
+      - "java"
+      - "dependencies"
+
   # Maintain dependencies for github-actions
   - package-ecosystem: "github-actions"
     # Cover both the standard workflow location and our composite actions.

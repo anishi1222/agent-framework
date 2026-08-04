@@ -251,3 +251,8 @@ dotnet/filtered-*.slnx
 
 **/issues/
 .test_*
+
+# Java / Gradle
+java/**/.gradle/
+java/**/build/
+java/**/.kotlin/

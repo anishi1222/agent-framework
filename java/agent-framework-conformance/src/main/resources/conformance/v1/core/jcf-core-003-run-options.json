@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-003",
+  "kind": "contract",
+  "description": "Run options are copied per run and do not mutate caller-owned input.",
+  "input": {
+    "options": {"maxIterations": 4, "maxFunctionCalls": 3, "metadata": {"tenant": "test-tenant"}},
+    "executionViews": ["sync", "async", "streaming"]
+  },
+  "expected": {
+    "effectiveOptions": {"maxIterations": 4, "maxFunctionCalls": 3, "metadata": {"tenant": "test-tenant"}},
+    "callerOptionsUnchanged": true,
+    "sharedExecutionCore": true
+  }
+}
