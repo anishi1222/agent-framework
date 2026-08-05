@@ -5,11 +5,17 @@ on:
     branches: ["main", "feature*"]
     paths:
       - "java/**"
+      - "docs/decisions/0038-java-state-serialization-and-compatibility.md"
+      - "docs/java/api-mapping.md"
+      - "docs/java/feature-parity-matrix.md"
       - ".github/workflows/java-build-and-test.yml"
   push:
     branches: ["main"]
     paths:
       - "java/**"
+      - "docs/decisions/0038-java-state-serialization-and-compatibility.md"
+      - "docs/java/api-mapping.md"
+      - "docs/java/feature-parity-matrix.md"
       - ".github/workflows/java-build-and-test.yml"
 
 permissions:

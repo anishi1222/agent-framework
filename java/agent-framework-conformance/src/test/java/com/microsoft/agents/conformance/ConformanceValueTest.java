@@ -15,10 +15,8 @@ class ConformanceValueTest {
     @MethodSource("equivalentNumbers")
     void numberValue_shouldUseMathematicalEqualityAndHashing(String left, String right) {
         // Arrange
-        ConformanceValue.NumberValue leftValue =
-                new ConformanceValue.NumberValue(new BigDecimal(left));
-        ConformanceValue.NumberValue rightValue =
-                new ConformanceValue.NumberValue(new BigDecimal(right));
+        ConformanceValue.NumberValue leftValue = new ConformanceValue.NumberValue(new BigDecimal(left));
+        ConformanceValue.NumberValue rightValue = new ConformanceValue.NumberValue(new BigDecimal(right));
 
         // Act and assert
         assertThat(leftValue).isEqualTo(rightValue);

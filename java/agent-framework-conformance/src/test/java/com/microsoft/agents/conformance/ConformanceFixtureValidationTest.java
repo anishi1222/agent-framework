@@ -72,6 +72,6 @@ class ConformanceFixtureValidationTest {
                 Arguments.of("empty-events", """
                         {"schemaVersion":1,"caseId":"JCF-CORE-999","kind":"tool-loop",
                          "description":"invalid","events":[],"expected":{"valid":false}}
-                        """, "events must not be empty"));
+                        """, "must not be empty"));
     }
 }

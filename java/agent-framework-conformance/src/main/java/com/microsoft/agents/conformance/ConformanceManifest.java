@@ -28,9 +28,9 @@ public record ConformanceManifest(int schemaVersion, List<ManifestCase> cases) {
             if (!caseIds.add(manifestCase.caseId())) {
                 throw new ConformanceValidationException("Duplicate manifest caseId '" + manifestCase.caseId() + "'.");
             }
-            if (!fixtures.add(manifestCase.fixture())) {
-                throw new ConformanceValidationException(
-                        "Duplicate fixture registration '" + manifestCase.fixture() + "'.");
+            String normalizedFixture = ManifestCase.normalizedFixturePath(manifestCase.fixture());
+            if (!fixtures.add(normalizedFixture)) {
+                throw new ConformanceValidationException("Duplicate fixture registration '" + normalizedFixture + "'.");
             }
         }
     }

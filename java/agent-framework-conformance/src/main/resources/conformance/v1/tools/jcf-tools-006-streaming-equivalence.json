@@ -6,13 +6,15 @@
   "events": [
     {"sequence": 0, "mode": "streaming", "type": "functionCallDelta", "callId": "call-stream", "argumentsDelta": "{\"value\":"},
     {"sequence": 1, "mode": "streaming", "type": "functionCallDelta", "callId": "call-stream", "argumentsDelta": "7}"},
-    {"sequence": 2, "mode": "streaming", "type": "functionResult", "callId": "call-stream", "result": 14},
-    {"sequence": 3, "mode": "streaming", "type": "textDelta", "text": "14"},
-    {"sequence": 4, "mode": "streaming", "type": "terminal", "outcome": "success"},
+    {"sequence": 2, "mode": "streaming", "type": "toolInvoked", "callId": "call-stream"},
+    {"sequence": 3, "mode": "streaming", "type": "functionResult", "callId": "call-stream", "result": 14},
+    {"sequence": 4, "mode": "streaming", "type": "textDelta", "text": "14"},
+    {"sequence": 5, "mode": "streaming", "type": "terminal", "outcome": "success"},
     {"sequence": 0, "mode": "nonStreaming", "type": "functionCall", "callId": "call-stream", "arguments": {"value": 7}},
-    {"sequence": 1, "mode": "nonStreaming", "type": "functionResult", "callId": "call-stream", "result": 14},
-    {"sequence": 2, "mode": "nonStreaming", "type": "assistantMessage", "text": "14"},
-    {"sequence": 3, "mode": "nonStreaming", "type": "terminal", "outcome": "success"}
+    {"sequence": 1, "mode": "nonStreaming", "type": "toolInvoked", "callId": "call-stream"},
+    {"sequence": 2, "mode": "nonStreaming", "type": "functionResult", "callId": "call-stream", "result": 14},
+    {"sequence": 3, "mode": "nonStreaming", "type": "assistantMessage", "text": "14"},
+    {"sequence": 4, "mode": "nonStreaming", "type": "terminal", "outcome": "success"}
   ],
   "expected": {
     "logicalCallIdsEqual": true,

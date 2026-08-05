@@ -3,6 +3,7 @@
 package com.microsoft.agents.conformance;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -17,6 +18,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class ConformanceManifestCoverageTest {
     private static final Pattern CASE_ID = Pattern.compile("JCF-[A-Z]+(?:-[A-Z]+)*-[0-9]{3}");
@@ -78,7 +80,26 @@ class ConformanceManifestCoverageTest {
                         "JCF-PROVIDERS");
     }
 
-    private static Map<String, Set<String>> readInitialScopeCases(Path matrixPath) throws IOException {
+    @Test
+    void initialScopeMatrixRows_shouldRejectDuplicateAreaLabels(@TempDir Path temporaryDirectory) throws IOException {
+        // Arrange
+        Path matrix = temporaryDirectory.resolve("matrix.md");
+        Files.writeString(matrix, """
+                ## 1. Core Abstractions
+                | Area / Group | .NET | Python | Java | Contract | Status |
+                |---|---|---|---|---|---|
+                | Duplicate area | a | b | c | `JCF-CORE-001` | `initial-scope` |
+                | Duplicate area | a | b | c | `JCF-CORE-002` | `initial-scope` |
+                ## SDK Classification Audit
+                """);
+
+        // Act and assert
+        assertThatThrownBy(() -> readInitialScopeCases(matrix))
+                .isInstanceOf(AssertionError.class)
+                .hasMessageContaining("duplicate initial-scope matrix area 'Duplicate area'");
+    }
+
+    static Map<String, Set<String>> readInitialScopeCases(Path matrixPath) throws IOException {
         LinkedHashMap<String, Set<String>> result = new LinkedHashMap<>();
         boolean inFeatureTables = false;
         for (String line : Files.readAllLines(matrixPath)) {
@@ -104,6 +125,9 @@ class ConformanceManifestCoverageTest {
             assertThat(caseIds)
                     .as("initial-scope matrix area '%s' must name at least one concrete JCF case", area)
                     .isNotEmpty();
+            if (result.containsKey(area)) {
+                throw new AssertionError("duplicate initial-scope matrix area '" + area + "'");
+            }
             result.put(area, Set.copyOf(caseIds));
         }
         return result;

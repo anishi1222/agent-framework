@@ -136,6 +136,7 @@ public final class ConformanceFixtureLoader {
         return switch (kind) {
             case CONTRACT, MESSAGE_CONTENT, RESPONSE_AGGREGATION -> {
                 rejectUnknownFields(root, with(COMMON_FIXTURE_FIELDS, "input"), sourceName);
+                FixtureSchemaV1.validate(root, kind, sourceName);
                 yield new BehaviorFixture(
                         schemaVersion,
                         caseId,
@@ -146,6 +147,7 @@ public final class ConformanceFixtureLoader {
             }
             case TOOL_LOOP, RUN_SIGNAL, WORKFLOW_TRACE -> {
                 rejectUnknownFields(root, with(COMMON_FIXTURE_FIELDS, "events"), sourceName);
+                FixtureSchemaV1.validate(root, kind, sourceName);
                 yield new EventHistoryFixture(
                         schemaVersion,
                         caseId,
@@ -156,6 +158,7 @@ public final class ConformanceFixtureLoader {
             }
             case SESSION_SNAPSHOT -> {
                 rejectUnknownFields(root, with(COMMON_FIXTURE_FIELDS, "envelope", "operations"), sourceName);
+                FixtureSchemaV1.validate(root, kind, sourceName);
                 yield new SnapshotFixture(
                         schemaVersion,
                         caseId,
@@ -163,6 +166,20 @@ public final class ConformanceFixtureLoader {
                         description,
                         requiredObjectValue(root, "envelope", sourceName),
                         requiredObjectList(root, "operations", sourceName),
+                        expected);
+            }
+            case WORKFLOW_CHECKPOINT -> {
+                rejectUnknownFields(
+                        root, with(COMMON_FIXTURE_FIELDS, "envelope", "encoded", "resumeEvents"), sourceName);
+                FixtureSchemaV1.validate(root, kind, sourceName);
+                yield new WorkflowCheckpointFixture(
+                        schemaVersion,
+                        caseId,
+                        kind,
+                        description,
+                        requiredObjectValue(root, "envelope", sourceName),
+                        requiredText(root, "encoded", sourceName),
+                        requiredObjectList(root, "resumeEvents", sourceName),
                         expected);
             }
         };

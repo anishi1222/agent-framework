@@ -6,4 +6,6 @@ description = "Tool metadata, argument binding, approvals, and tool invocation r
 
 dependencies {
     api(project(":agent-framework-core"))
+
+    testImplementation(project(":agent-framework-conformance"))
 }

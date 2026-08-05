@@ -1,8 +1,8 @@
 # Java Port — Terminology & API Mapping
 
 **Task ID:** `java-parity-baseline`
-**Status:** Conformance foundation — runtime APIs remain proposed; test-support fixtures are implemented.
-**Last updated:** 2026-08-04
+**Status:** Core model and tool runtime implemented; agent, session, and workflow runtime APIs remain proposed.
+**Last updated:** 2026-08-05
 
 This document provides the cross-language name mapping so that the Java implementation uses
 consistent terminology and so that reviewers can navigate between .NET, Python, and Java surfaces
@@ -22,8 +22,8 @@ initial/later-parity status.
 | **Agent session** | `AgentSession` | `AgentSession` | `AgentSession` | Identical across all three languages. |
 | **Agent response** | `AgentResponse<T>` | `AgentResponse` | `AgentResponse<T>` | .NET generic; Python untyped. Java uses generic. |
 | **Response update (streaming)** | `AgentResponseUpdate` | `AgentResponseUpdate` | `AgentResponseUpdate` | One chunk of a streaming run. |
-| **Run options** | `AgentRunOptions` | `AgentRunInputs` / `ChatOptions` | `AgentRunOptions` | Java follows .NET name. |
-| **Chat message** | `ChatMessage` (from `Microsoft.Extensions.AI`) | `Message` | `ChatMessage` | External `Microsoft.Extensions.AI` in .NET; internal in Python. Java owns its own type. |
+| **Run options** | `AgentRunOptions` | `AgentRunInputs` / `ChatOptions` | `RunOptions` | Java uses the concise framework-owned name. |
+| **Chat message** | `ChatMessage` (from `Microsoft.Extensions.AI`) | `Message` | `Message` | External `Microsoft.Extensions.AI` in .NET; internal in Python. Java owns its own type. |
 | **Message content** | `AIContent` | `Content` | `Content` | Java follows Python name; it is more concise. |
 | **Message role** | `ChatRole` (external) | `Role` / `RoleLiteral` | `Role` | Java follows Python name. |
 | **Chat client** | `IChatClient` (external interface) | `BaseChatClient` | `com.microsoft.agents.agents.ChatClient` (interface) | Java uses a plain interface name; no `I` prefix per Java conventions. |
@@ -37,7 +37,7 @@ initial/later-parity status.
 | **Session state bag** | `AgentSessionStateBag` | `AgentSession.state` (dict-like) | `AgentSessionStateBag` | Java follows .NET. |
 | **Agent metadata** | `AIAgentMetadata` | `Agent.id`, `Agent.description` properties | `AgentMetadata` | Simplified name in Java. |
 | **Function tool** | `AIFunction` | `FunctionTool` | `FunctionTool` | Java follows Python name. |
-| **Tool annotation** | `AIFunction` constructor | `@tool` decorator | `@Tool` annotation | Java uses annotation. |
+| **Tool annotation** | `AIFunction` constructor | `@tool` decorator | `@ToolMethod` annotation | Java keeps the `Tool` interface name and uses `@ToolMethod` for public methods. |
 | **Tool mode** | `FunctionInvokingChatClient` options | `ToolMode` | `ToolMode` | Java follows Python. |
 | **Tool capability** | `AITool` sub-interfaces | `Supports*` protocols | `ToolCapability` interfaces | Java introduces explicit capability interfaces. |
 | **Middleware (agent)** | `IAIAgentMiddleware` / extensions | `AgentMiddleware` | `AgentMiddleware` | Java follows Python name. |
@@ -145,7 +145,7 @@ HTTP/SSE/WebSocket hosting is later-parity, while ASP.NET Core-specific route-ex
 | `com.microsoft.agents.workflows.CheckpointStorage` | `capabilities()`, `loadAsync(CheckpointKey)`, `saveAsync(CheckpointKey, WorkflowCheckpoint, long expectedRevision)`, `deleteAsync(CheckpointKey, long expectedRevision)`, `commitAsync(CheckpointCommit, long expectedRevision)` |
 | `com.microsoft.agents.tools.ToolInvocationLedger` | `lookupAsync(InvocationId)`, `recordPendingAsync(InvocationRecord, long expectedRevision)`, `recordOutcomeAsync(InvocationOutcome, long expectedRevision)` |
 | `com.microsoft.agents.core.StateCodec<T>` | `typeId()`, `currentVersion()`, `encode(T)`, `migrate(StateValue, int fromVersion, int toVersion)`, `decode(StateValue, int version)` |
-| `com.microsoft.agents.core.SerializationLimits` | `maxDocumentBytes()`, `maxDepth()`, `maxStringLength()`, `maxNumberLength()`, `maxCollectionEntries()` |
+| `com.microsoft.agents.core.SerializationLimits` | `maxDocumentBytes()`, `maxNestingDepth()`, `maxStringLength()`, `maxNumericTokenLength()`, `maxCollectionEntries()` |
 
 Store loads return `CompletionStage<Optional<VersionedSnapshot<T>>>`; writes return
 `CompletionStage<VersionedSnapshot<T>>`. All writes are compare-and-set operations. `commitAsync` is part of every
@@ -177,7 +177,7 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 | Java (proposed) | .NET source | Python source |
 |---|---|---|
 | `com.microsoft.agents.core.AgentResponse<T>` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AgentResponse.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AgentResponse.cs) | [`python/packages/core/agent_framework/_types.py`](../../python/packages/core/agent_framework/_types.py) |
-| `com.microsoft.agents.core.ChatMessage` | `Microsoft.Extensions.AI.ChatMessage` (external) | [`python/packages/core/agent_framework/_types.py`](../../python/packages/core/agent_framework/_types.py) · `Message` |
+| `com.microsoft.agents.core.Message` | `Microsoft.Extensions.AI.ChatMessage` (external) | [`python/packages/core/agent_framework/_types.py`](../../python/packages/core/agent_framework/_types.py) · `Message` |
 | `com.microsoft.agents.core.RunHandle<T>` / `RunCancellation` | `CancellationToken` + task | task cancellation |
 | `com.microsoft.agents.core.StateCodec<T>` / `VersionedSnapshot<T>` | store-specific serializers and versions | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) |
 
@@ -185,9 +185,9 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 
 | Java (proposed) | .NET source | Python source |
 |---|---|---|
-| `com.microsoft.agents.tools.FunctionTool` | `Microsoft.Extensions.AI.AIFunction` (external) | [`python/packages/core/agent_framework/_tools.py`](../../python/packages/core/agent_framework/_tools.py) · `FunctionTool` |
+| `com.microsoft.agents.tools.FunctionTool` / `Tool` / `@ToolMethod` | `Microsoft.Extensions.AI.AIFunction` (external) | [`python/packages/core/agent_framework/_tools.py`](../../python/packages/core/agent_framework/_tools.py) · `FunctionTool` |
 | `com.microsoft.agents.tools.ToolApprovalRequest` / `ToolApprovalDecision` | approval middleware state | [`python/packages/core/agent_framework/_middleware.py`](../../python/packages/core/agent_framework/_middleware.py) · `ToolApprovalState` |
-| `com.microsoft.agents.tools.ToolInvocationLedger` | function-invocation state | function-invocation state |
+| `com.microsoft.agents.tools.ToolInvocationLedger` / `InvocationId` | function-invocation state | function-invocation state |
 | `com.microsoft.agents.agents.ChatClient` | `Microsoft.Extensions.AI.IChatClient` (external) | [`python/packages/core/agent_framework/_clients.py`](../../python/packages/core/agent_framework/_clients.py) · `BaseChatClient` |
 | `com.microsoft.agents.agents.Agent` / `BaseAgent` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs) | [`python/packages/core/agent_framework/_agents.py`](../../python/packages/core/agent_framework/_agents.py) |
 | `com.microsoft.agents.agents.AgentSession` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AgentSession.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AgentSession.cs) | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) |
@@ -231,6 +231,7 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 | Java (proposed) | Parent | Completion/synchronous mapping | .NET / Python equivalent |
 |---|---|---|---|
 | `AgentFrameworkException` | `RuntimeException` | Root for framework failures | `agent_framework.exceptions.AgentFrameworkException` |
+| `ValidationException` | `AgentFrameworkException` | Invalid framework-owned value or incompatible aggregation update | `ValueError` / `ContentError` |
 | `AgentExecutionException` | `AgentFrameworkException` | Async stage cause; sync wrapper cause | agent run failure |
 | `RunCancelledException` | `AgentExecutionException` | Async stage cause and explicit cancellation classification | cancellation token / task cancellation |
 | `SynchronousExecutionException` | `AgentExecutionException` | Thrown only by unsuffixed blocking facades; preserves typed cause | synchronous wrapper |

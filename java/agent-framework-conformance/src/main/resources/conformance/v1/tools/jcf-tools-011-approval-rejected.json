@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-011",
+  "kind": "tool-loop",
+  "description": "An explicit approval rejection resumes the run without invoking the rejected tool.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-rejected", "name": "write"},
+    {"sequence": 1, "type": "approvalRequested", "approvalId": "approval-rejected", "callId": "call-rejected"},
+    {"sequence": 2, "type": "terminal", "outcome": "inputRequired"},
+    {"sequence": 3, "type": "approvalDecision", "approvalId": "approval-rejected", "approved": false},
+    {"sequence": 4, "type": "assistantMessage", "text": "The tool was not executed."},
+    {"sequence": 5, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "rejectionAccepted": true,
+    "toolExecuted": false,
+    "functionResultCount": 0,
+    "invocationCount": 0,
+    "terminalCount": 2
+  }
+}

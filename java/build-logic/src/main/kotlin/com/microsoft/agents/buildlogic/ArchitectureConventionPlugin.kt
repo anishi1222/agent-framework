@@ -2,6 +2,9 @@
 
 package com.microsoft.agents.buildlogic
 
+import java.io.PrintWriter
+import java.io.StringWriter
+import java.util.spi.ToolProvider
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -44,8 +47,23 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                         }
                     }
                 }
+        val publicSignatureChecks =
+            project.subprojects
+                .filter { it.name in SHARED_MODULES }
+                .map { module ->
+                    module.tasks.register("checkArchitecturePublicSignatures") {
+                        group = "verification"
+                        description =
+                            "Checks compiled public and protected signatures for shared-runtime API isolation."
+                        dependsOn("${module.path}:classes")
+                        doLast {
+                            validateCompiledPublicSignatures(module)
+                        }
+                    }
+                }
         architectureCheck.configure {
             dependsOn(resolvedDependencyChecks)
+            dependsOn(publicSignatureChecks)
         }
 
         project.pluginManager.withPlugin("base") {
@@ -114,19 +132,65 @@ class ArchitectureConventionPlugin : Plugin<Project> {
             }
         }
 
-        SHARED_MODULES.forEach { moduleName ->
-            val module = root.findProject(":$moduleName") ?: return@forEach
-            module.fileTree("src/main/java") {
-                include("**/*.java")
-            }.forEach { source ->
-                val text = source.readText()
-                FORBIDDEN_PUBLIC_API_PREFIXES.firstOrNull { text.contains(it) }?.let { forbidden ->
+    }
+
+    private fun validateCompiledPublicSignatures(module: Project) {
+        val classesDirectory =
+            module.layout.buildDirectory
+                .dir("classes/java/main")
+                .get()
+                .asFile
+        if (!classesDirectory.isDirectory) {
+            return
+        }
+        val javap =
+            ToolProvider.findFirst("javap").orElseThrow {
+                GradleException("The JDK javap tool is required for compiled public-signature isolation.")
+            }
+        classesDirectory
+            .walkTopDown()
+            .filter { it.isFile && it.extension == "class" && it.name != "module-info.class" }
+            .forEach { classFile ->
+                val className =
+                    classFile
+                        .relativeTo(classesDirectory)
+                        .path
+                        .removeSuffix(".class")
+                        .replace(java.io.File.separatorChar, '.')
+                val output = StringWriter()
+                val errors = StringWriter()
+                val result =
+                    javap.run(
+                        PrintWriter(output),
+                        PrintWriter(errors),
+                        "-protected",
+                        "-classpath",
+                        classesDirectory.absolutePath,
+                        className,
+                    )
+                if (result != 0) {
                     throw GradleException(
-                        "${source.relativeTo(root.rootDir)} exposes or imports forbidden API namespace $forbidden.",
+                        "javap failed for ${module.path}:$className: ${errors.toString().trim()}",
+                    )
+                }
+                val lines = output.toString().lineSequence().map(String::trim).toList()
+                val declaration = lines.firstOrNull { it.endsWith("{") } ?: return@forEach
+                if (!declaration.startsWith("public ") && !declaration.startsWith("protected ")) {
+                    return@forEach
+                }
+                val offending =
+                    lines.firstOrNull { line ->
+                        (line.startsWith("public ") || line.startsWith("protected ")) &&
+                            FORBIDDEN_PUBLIC_API_PREFIXES.any(line::contains)
+                    }
+                if (offending != null) {
+                    val forbidden = requireNotNull(FORBIDDEN_PUBLIC_API_PREFIXES.firstOrNull(offending::contains))
+                    throw GradleException(
+                        "Module '${module.path}' compiled public/protected signature '$offending' " +
+                            "exposes forbidden API namespace $forbidden.",
                     )
                 }
             }
-        }
     }
 
     private fun validateDependencyDirection(root: Project) {
@@ -185,9 +249,50 @@ class ArchitectureConventionPlugin : Plugin<Project> {
     }
 
     private fun validatePublicationPolicy(root: Project) {
-        val testSupport = root.findProject(":$TEST_SUPPORT_MODULE") ?: return
-        if (testSupport.pluginManager.hasPlugin("maven-publish")) {
-            throw GradleException("$TEST_SUPPORT_MODULE is test support and must not apply maven-publish.")
+        root.findProject(":$TEST_SUPPORT_MODULE")?.let { testSupport ->
+            if (testSupport.pluginManager.hasPlugin("maven-publish")) {
+                throw GradleException("$TEST_SUPPORT_MODULE is test support and must not apply maven-publish.")
+            }
+        }
+
+        val bom = root.findProject(":$BOM_MODULE") ?: return
+        val references = sortedSetOf<String>()
+        bom.configurations.forEach { configuration ->
+            configuration.allDependencies
+                .filter { dependency -> dependency.name == TEST_SUPPORT_MODULE }
+                .forEach { dependency ->
+                    references +=
+                        "${configuration.name} dependency " +
+                        "${dependency.group ?: "<project>"}:${dependency.name}"
+                }
+            configuration.allDependencyConstraints
+                .filter { constraint -> constraint.name == TEST_SUPPORT_MODULE }
+                .forEach { constraint ->
+                    references +=
+                        "${configuration.name} constraint " +
+                        "${constraint.group ?: "<project>"}:${constraint.name}"
+                }
+        }
+        if (references.isNotEmpty()) {
+            throw GradleException(
+                "$BOM_MODULE must not reference or constrain $TEST_SUPPORT_MODULE; found: " +
+                    references.joinToString(),
+            )
+        }
+
+        val expectedConstraints = JavaModulePolicies.publishedModules(root)
+        val declaredConstraints =
+            bom.configurations
+                .getByName("api")
+                .dependencyConstraints
+                .mapTo(sortedSetOf()) { constraint -> constraint.name }
+        val missing = expectedConstraints - declaredConstraints
+        val extra = declaredConstraints - expectedConstraints
+        if (missing.isNotEmpty() || extra.isNotEmpty()) {
+            throw GradleException(
+                "$BOM_MODULE constraints must exactly match published Java modules; " +
+                    "missing=${missing.sorted()}, extra=${extra.sorted()}.",
+            )
         }
     }
 
@@ -256,13 +361,7 @@ class ArchitectureConventionPlugin : Plugin<Project> {
 
     private companion object {
         const val PREVIEW_FLAG = "--enable-" + "preview"
-        const val BOM_MODULE = "agent-framework-bom"
-
-        data class ModulePolicy(
-            val allowedProjectDependencies: Set<String>,
-            val expectedPackageRoot: String,
-            val published: Boolean = true,
-        )
+        const val BOM_MODULE = JavaModulePolicies.BOM_MODULE
 
         val SHARED_MODULES =
             setOf(
@@ -273,55 +372,16 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                 "agent-framework-orchestrations",
             )
 
-        val MODULE_POLICIES =
-            mapOf(
-                "agent-framework-core" to
-                    ModulePolicy(emptySet(), "com.microsoft.agents.core"),
-                "agent-framework-tools" to
-                    ModulePolicy(
-                        setOf("agent-framework-core"),
-                        "com.microsoft.agents.tools",
-                    ),
-                "agent-framework-agents" to
-                    ModulePolicy(
-                        setOf("agent-framework-core", "agent-framework-tools"),
-                        "com.microsoft.agents.agents",
-                    ),
-                "agent-framework-workflows" to
-                    ModulePolicy(
-                        setOf("agent-framework-agents"),
-                        "com.microsoft.agents.workflows",
-                    ),
-                "agent-framework-orchestrations" to
-                    ModulePolicy(
-                        setOf("agent-framework-workflows"),
-                        "com.microsoft.agents.orchestrations",
-                    ),
-                "agent-framework-observability" to
-                    ModulePolicy(
-                        setOf("agent-framework-agents"),
-                        "com.microsoft.agents.observability",
-                    ),
-                "agent-framework-reactor-adapter" to
-                    ModulePolicy(
-                        setOf("agent-framework-agents"),
-                        "com.microsoft.agents.adapters.reactor",
-                    ),
-                TEST_SUPPORT_MODULE to
-                    ModulePolicy(
-                        emptySet(),
-                        "com.microsoft.agents.conformance",
-                        published = false,
-                    ),
-            )
+        val MODULE_POLICIES = JavaModulePolicies.policies
 
         val PRODUCTION_CLASSPATHS = listOf("compileClasspath", "runtimeClasspath")
-        const val TEST_SUPPORT_MODULE = "agent-framework-conformance"
+        const val TEST_SUPPORT_MODULE = JavaModulePolicies.TEST_SUPPORT_MODULE
 
         val FORBIDDEN_PUBLIC_API_PREFIXES =
             listOf(
                 "com.azure.",
                 "com.anthropic.",
+                "com.fasterxml.jackson.",
                 "com.google.genai.",
                 "com.openai.",
                 "dev.langchain4j.",

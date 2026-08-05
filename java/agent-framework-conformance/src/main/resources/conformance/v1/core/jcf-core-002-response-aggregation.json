@@ -2,20 +2,73 @@
   "schemaVersion": 1,
   "caseId": "JCF-CORE-002",
   "kind": "response-aggregation",
-  "description": "Ordered updates aggregate into one deterministic response with text, usage, and finish reason.",
+  "description": "Ordered updates aggregate into one deterministic response with Python-compatible sequential usage folds.",
   "input": {
     "updates": [
-      {"sequence": 0, "role": "assistant", "contents": [{"kind": "text", "text": "hello "}]},
-      {"sequence": 1, "role": "assistant", "contents": [{"kind": "text", "text": "world"}]},
-      {"sequence": 2, "usage": {"inputTokens": 3, "outputTokens": 2}, "finishReason": "stop"}
+      {
+        "sequence": 0,
+        "role": "assistant",
+        "contents": [{"kind": "text", "text": "hello "}],
+        "usage": {
+          "inputTokens": 2,
+          "outputTokens": null,
+          "nullAndMissing": null,
+          "alwaysDropped": 1,
+          "reintroduced": 1,
+          "scaledNumber": 1.0,
+          "nested": {"cacheRead": 1},
+          "largeTokens": 9223372036854775808
+        }
+      },
+      {
+        "sequence": 1,
+        "role": "assistant",
+        "contents": [{"kind": "text", "text": "world"}],
+        "usage": {
+          "inputTokens": 3,
+          "outputTokens": 2,
+          "missingThenNumber": 4,
+          "alwaysDropped": "non-numeric",
+          "reintroduced": "non-numeric",
+          "nested": {"cacheRead": 2},
+          "largeTokens": 2
+        }
+      },
+      {
+        "sequence": 2,
+        "usage": {
+          "inputTokens": 1,
+          "outputTokens": null,
+          "missingThenNumber": null,
+          "nullAndMissing": null,
+          "reintroduced": 7,
+          "scaledNumber": 9,
+          "fractional": 1.5,
+          "largeTokens": 1
+        }
+      },
+      {
+        "sequence": 3,
+        "usage": {"inputTokens": 4},
+        "finishReason": "stop"
+      }
     ]
   },
   "expected": {
     "messageCount": 1,
     "role": "assistant",
     "text": "hello world",
-    "usage": {"inputTokens": 3, "outputTokens": 2},
+    "usage": {
+      "inputTokens": 10,
+      "outputTokens": 2,
+      "nullAndMissing": 0,
+      "missingThenNumber": 4,
+      "reintroduced": 7,
+      "scaledNumber": 9,
+      "largeTokens": 9223372036854775811
+    },
+    "droppedUsageKeys": ["alwaysDropped", "nested", "fractional"],
     "finishReason": "stop",
-    "updateSequences": [0, 1, 2]
+    "updateSequences": [0, 1, 2, 3]
   }
 }

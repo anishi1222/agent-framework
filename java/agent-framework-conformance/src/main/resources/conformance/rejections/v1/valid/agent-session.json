@@ -1,0 +1,1 @@
+{"format":"agent-framework-java-state","documentKind":"agent-session","payloadVersion":1,"payload":{"sessionId":"valid-session","messages":[{"role":"user","contents":[{"kind":"text","text":"hello"}]}],"state":{"turn":1}}}

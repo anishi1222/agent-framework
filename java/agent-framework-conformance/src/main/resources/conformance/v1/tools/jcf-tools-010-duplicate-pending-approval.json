@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-010",
+  "kind": "tool-loop",
+  "description": "A second decision for the same pending approval is rejected before the approved call executes once.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-decision", "name": "write"},
+    {"sequence": 1, "type": "approvalRequested", "approvalId": "approval-decision", "callId": "call-decision"},
+    {"sequence": 2, "type": "terminal", "outcome": "inputRequired"},
+    {"sequence": 3, "type": "approvalDecision", "approvalId": "approval-decision", "approved": true},
+    {"sequence": 4, "type": "replayedApprovalDecision", "approvalId": "approval-decision", "approved": false},
+    {"sequence": 5, "type": "approvalReplayRejected", "approvalId": "approval-decision", "reason": "decisionAlreadyPending"},
+    {"sequence": 6, "type": "toolInvoked", "callId": "call-decision"},
+    {"sequence": 7, "type": "functionResult", "callId": "call-decision", "result": "written"},
+    {"sequence": 8, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "primaryDecisionApproved": true,
+    "duplicateDecisionAccepted": false,
+    "functionResultCount": 1,
+    "invocationCount": 1,
+    "terminalCount": 2
+  }
+}

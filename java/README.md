@@ -1,8 +1,10 @@
 # Agent Framework for Java
 
-This directory contains the Java 25 foundation for Microsoft Agent Framework. Framework behavior is
-implemented incrementally; the current modules establish the approved build, dependency, quality,
-and publication boundaries.
+This directory contains the Java 25 implementation of Microsoft Agent Framework. Framework behavior
+is implemented incrementally; `agent-framework-core` now provides the immutable provider-neutral
+model, strict streaming aggregation, run cancellation, and safe versioned JSON foundation. Other
+runtime modules still establish approved dependency, quality, and publication boundaries until their
+features are implemented.
 
 ## Prerequisites
 
@@ -41,3 +43,17 @@ that depend inward on the shared runtime. `agent-framework-bom` aligns all publi
 versions and contains no runtime classes. `agent-framework-conformance` contains versioned,
 language-neutral fixtures and test-support APIs; it is not published, is not in the BOM, and cannot
 be a production dependency of published modules.
+
+## Core API
+
+`com.microsoft.agents.core` owns:
+
+- `Role`, `FinishReason`, `Message`, and the sealed `Content` hierarchy;
+- `ChatResponse` / `ChatResponseUpdate` and `AgentResponse<T>` / `AgentResponseUpdate`;
+- immutable `RunOptions`, `ChatOptions`, and arbitrary-precision `UsageDetails`;
+- `ResponseAggregator`, `RunCancellation`, `RunHandle<T>`, and `RunHandleSource<T>`; and
+- `StateValue`, versioned envelopes, explicit `StateCodec<T>` registration, and
+  `JsonStateSerializer`.
+
+Jackson is an implementation dependency of core serialization and does not appear in public model
+or SPI signatures. Session and workflow snapshot schemas remain owned by their later runtime modules.

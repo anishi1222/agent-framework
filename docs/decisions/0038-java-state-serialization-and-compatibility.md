@@ -54,6 +54,25 @@ partially restoring state. Readers ignore unknown additive properties within a s
 properties remain validated. Writers produce deterministic property names and must not rely on map iteration order for
 semantic meaning.
 
+For Java version `1`, "canonical JSON" means compact UTF-8 JSON in which keys in every object are ordered recursively
+by Java `String.compareTo`. This one rule applies to envelopes, framework payload objects, buffered-input objects, and
+application/provider map values; there is no separate fixed field order for checkpoint objects.
+
+Arrays preserve semantic order and the JSON serializer never sorts them implicitly. A caller sorts an array before
+serialization only when that schema explicitly defines the array as an unordered semantic set. In the version `1`
+workflow-checkpoint schema:
+
+- `pendingExecutors` is a semantic set and is sorted by Java `String.compareTo`;
+- `bufferedInputs` is a semantic set keyed by `(targetId, sourceId)` and is sorted first by `targetId`, then by
+  `sourceId`, using Java `String.compareTo`; duplicate keys are invalid; and
+- every other array is order-bearing and is emitted without reordering, including messages, content, events, outputs,
+  fan-in `sourceIds`/`values`, and arrays nested inside application/provider values.
+
+Readers do not treat authored object or semantic-set insertion order as meaningful. Golden encodings are produced by
+sorting schema-defined semantic-set arrays and then passing the resulting framework-owned state tree to the core
+serializer, which recursively orders object keys. Serializing the parsed authored tree directly without those
+semantic-set transforms is not a canonicalization algorithm.
+
 Document payload versions and registered-codec versions are independent. Each registered value includes its stable type
 ID and codec version. The provider-neutral `com.microsoft.agents.core.StateCodec<T>` SPI exposes
 `typeId()`, `currentVersion()`, `encode(T)`, `migrate(StateValue, int fromVersion, int toVersion)`, and
@@ -74,7 +93,9 @@ unknown type ID fails restoration without executing or instantiating an arbitrar
 Every reader receives a required `SerializationLimits` configuration. It enforces maximum document bytes, nesting
 depth, string length, numeric token length, and collection/map entry count. Duplicate object keys, non-finite numbers,
 and trailing content are rejected. Limits apply before or during tokenization, not only after constructing an in-memory
-tree, and limit violations fail with `SerializationException`.
+tree, and limit violations fail with `SerializationException`. The portable names are `maxDocumentBytes`,
+`maxNestingDepth`, `maxStringLength`, `maxNumericTokenLength`, and `maxCollectionEntries`; implementations may choose
+environment-specific values, but must accept all five explicitly rather than relying on hidden parser defaults.
 
 Credentials, access tokens, API keys, private keys, SDK clients, and live resource handles are prohibited from
 serialized state by default. Codecs must fail rather than persist a known credential-bearing type. Encryption at rest,

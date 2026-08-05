@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-012",
+  "kind": "tool-loop",
+  "description": "Synchronous, asynchronous, and streaming views share one logical-run invocation owner.",
+  "events": [
+    {
+      "sequence": 0,
+      "type": "functionCall",
+      "callId": "call-shared-view",
+      "invocationId": "logical-run-012:call-shared-view",
+      "logicalRunId": "logical-run-012",
+      "executionViews": ["synchronous", "asynchronous", "streaming"],
+      "name": "write",
+      "arguments": {"value": "once"}
+    },
+    {
+      "sequence": 1,
+      "type": "toolInvoked",
+      "invocationId": "logical-run-012:call-shared-view"
+    },
+    {
+      "sequence": 2,
+      "type": "functionResult",
+      "callId": "call-shared-view",
+      "result": "written"
+    },
+    {"sequence": 3, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "executionViews": ["synchronous", "asynchronous", "streaming"],
+    "logicalRunId": "logical-run-012",
+    "sharedInvocationId": "logical-run-012:call-shared-view",
+    "totalInvocationCount": 1,
+    "functionResultCount": 1,
+    "terminalCount": 1
+  }
+}

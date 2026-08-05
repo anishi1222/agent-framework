@@ -8,7 +8,7 @@
     {"sequence": 1, "type": "toolInvoked", "invocationId": "run-004:call-once"},
     {"sequence": 2, "type": "functionResult", "callId": "call-once", "result": "done"},
     {"sequence": 3, "type": "replayedFunctionCall", "callId": "call-once", "invocationId": "run-004:call-once"},
-    {"sequence": 4, "type": "replayRejected", "reason": "terminalOutcomeAlreadyRecorded"},
+    {"sequence": 4, "type": "replayRejected", "callId": "call-once", "reason": "terminalOutcomeAlreadyRecorded"},
     {"sequence": 5, "type": "terminal", "outcome": "success"}
   ],
   "expected": {

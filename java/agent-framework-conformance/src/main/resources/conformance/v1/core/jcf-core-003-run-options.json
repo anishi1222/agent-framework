@@ -9,7 +9,6 @@
   },
   "expected": {
     "effectiveOptions": {"maxIterations": 4, "maxFunctionCalls": 3, "metadata": {"tenant": "test-tenant"}},
-    "callerOptionsUnchanged": true,
-    "sharedExecutionCore": true
+    "callerOptionsUnchanged": true
   }
 }

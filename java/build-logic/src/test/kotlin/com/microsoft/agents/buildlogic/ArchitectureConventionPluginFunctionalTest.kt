@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.io.TempDir
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.jar.JarEntry
 import java.util.jar.JarOutputStream
 
 class ArchitectureConventionPluginFunctionalTest {
@@ -66,6 +67,93 @@ class ArchitectureConventionPluginFunctionalTest {
         val result = runner("checkArchitecture").build()
 
         assertThat(result.task(":checkArchitecture")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+    }
+
+    @Test
+    fun `internal Jackson implementation reference is allowed`() {
+        writeJacksonFixture()
+        writeSettings("agent-framework-core", repository = "repository")
+        writeRootBuild()
+        writeFile(
+            "agent-framework-core/build.gradle",
+            """
+            plugins {
+                id 'java-library'
+            }
+
+            tasks.withType(JavaCompile).configureEach {
+                options.release = 25
+            }
+
+            dependencies {
+                implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+            }
+            """.trimIndent(),
+        )
+        writeFile(
+            "agent-framework-core/src/main/java/com/microsoft/agents/core/InternalJackson.java",
+            """
+            package com.microsoft.agents.core;
+
+            import com.fasterxml.jackson.databind.ObjectMapper;
+
+            public final class InternalJackson {
+                private final ObjectMapper mapper = new ObjectMapper();
+
+                public String implementationName() {
+                    return mapper.getClass().getName();
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("checkArchitecture").build()
+
+        assertThat(result.task(":checkArchitecture")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+    }
+
+    @Test
+    fun `public Jackson signature is rejected`() {
+        writeJacksonFixture()
+        writeSettings("agent-framework-core", repository = "repository")
+        writeRootBuild()
+        writeFile(
+            "agent-framework-core/build.gradle",
+            """
+            plugins {
+                id 'java-library'
+            }
+
+            tasks.withType(JavaCompile).configureEach {
+                options.release = 25
+            }
+
+            dependencies {
+                implementation 'com.fasterxml.jackson.core:jackson-databind:2.22.1'
+            }
+            """.trimIndent(),
+        )
+        writeFile(
+            "agent-framework-core/src/main/java/com/microsoft/agents/core/LeakyJackson.java",
+            """
+            package com.microsoft.agents.core;
+
+            import com.fasterxml.jackson.databind.ObjectMapper;
+
+            public final class LeakyJackson {
+                public ObjectMapper mapper() {
+                    return new ObjectMapper();
+                }
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("checkArchitecture").buildAndFail()
+
+        assertThat(result.output)
+            .contains("compiled public/protected signature")
+            .contains("com.fasterxml.jackson.")
+            .contains("ObjectMapper mapper()")
     }
 
     @Test
@@ -190,6 +278,80 @@ class ArchitectureConventionPluginFunctionalTest {
     }
 
     @Test
+    fun `BOM conformance constraint fails architecture policy`() {
+        writeBomFixture("agent-framework-conformance")
+
+        val result = runner("checkArchitecture").buildAndFail()
+
+        assertThat(result.output)
+            .contains(
+                "agent-framework-bom must not reference or constrain agent-framework-conformance",
+            )
+            .contains("constraint")
+    }
+
+    @Test
+    fun `BOM missing a published module constraint fails architecture policy`() {
+        writeBomFixture(
+            publishedModules = listOf("agent-framework-core", "agent-framework-tools"),
+            constraintTargets = listOf("agent-framework-core"),
+        )
+
+        val result = runner("checkArchitecture").buildAndFail()
+
+        assertThat(result.output)
+            .contains("constraints must exactly match published Java modules")
+            .contains("missing=[agent-framework-tools]")
+            .contains("extra=[]")
+    }
+
+    @Test
+    fun `generated BOM metadata rejects conformance constraint`() {
+        writeBomFixture("agent-framework-conformance")
+
+        val result =
+            runner(":agent-framework-bom:checkBomPublicationMetadata")
+                .buildAndFail()
+
+        assertThat(result.output)
+            .contains("must not reference agent-framework-conformance")
+    }
+
+    @Test
+    fun `valid BOM constraints pass and generated metadata excludes conformance`() {
+        writeBomFixture("agent-framework-core")
+
+        val result =
+            runner(
+                "checkArchitecture",
+                ":agent-framework-bom:checkBomPublicationMetadata",
+            ).build()
+
+        assertThat(result.task(":checkArchitecture")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+        assertThat(result.task(":agent-framework-bom:checkBomPublicationMetadata")?.outcome)
+            .isEqualTo(TaskOutcome.SUCCESS)
+
+        val pom =
+            Files.readString(
+                projectDirectory.resolve(
+                    "agent-framework-bom/build/publications/mavenBom/pom-default.xml",
+                ),
+            )
+        val moduleMetadata =
+            Files.readString(
+                projectDirectory.resolve(
+                    "agent-framework-bom/build/publications/mavenBom/module.json",
+                ),
+            )
+        assertThat(pom)
+            .contains("<artifactId>agent-framework-core</artifactId>")
+            .doesNotContain("agent-framework-conformance")
+        assertThat(moduleMetadata)
+            .contains("agent-framework-core")
+            .doesNotContain("agent-framework-conformance")
+    }
+
+    @Test
     fun `all publication entry points include quality and architecture gates`() {
         writeSettings("agent-framework-core", "agent-framework-bom", "agent-framework-conformance")
         writeRootBuild(includePublicationAggregate = true)
@@ -254,6 +416,56 @@ class ArchitectureConventionPluginFunctionalTest {
             .contains(":agent-framework-bom:publishMavenBomPublicationToMavenLocal SKIPPED")
             .contains(":publishToTestRepository SKIPPED")
             .doesNotContain(":agent-framework-conformance:publish")
+    }
+
+    private fun writeBomFixture(constraintTarget: String) {
+        writeBomFixture(
+            publishedModules = listOf("agent-framework-core"),
+            constraintTargets = listOf(constraintTarget),
+        )
+    }
+
+    private fun writeBomFixture(
+        publishedModules: List<String>,
+        constraintTargets: List<String>,
+    ) {
+        writeSettings(
+            *publishedModules.toTypedArray(),
+            "agent-framework-bom",
+            "agent-framework-conformance",
+        )
+        writeRootBuild()
+        (publishedModules + "agent-framework-conformance").forEach { module ->
+            writeFile(
+                "$module/build.gradle",
+                """
+                plugins {
+                    id 'java-library'
+                }
+
+                group = 'com.microsoft.agents'
+                version = '0.1.0-test'
+
+                tasks.withType(JavaCompile).configureEach {
+                    options.release = 25
+                }
+                """.trimIndent(),
+            )
+        }
+        writeFile(
+            "agent-framework-bom/build.gradle",
+            """
+            plugins {
+                id 'com.microsoft.agents.java-platform'
+            }
+
+            dependencies {
+                constraints {
+                    ${constraintTargets.joinToString(System.lineSeparator()) { target -> "api project(':$target')" }}
+                }
+            }
+            """.trimIndent(),
+        )
     }
 
     private fun writeSettings(
@@ -357,6 +569,52 @@ class ArchitectureConventionPluginFunctionalTest {
         JarOutputStream(
             Files.newOutputStream(moduleDirectory.resolve("$artifact-$version.jar")),
         ).use { }
+    }
+
+    private fun writeJacksonFixture() {
+        val group = "com.fasterxml.jackson.core"
+        val artifact = "jackson-databind"
+        val version = "2.22.1"
+        writeMavenModule(group, artifact, version)
+        val sourceRoot = projectDirectory.resolve("dependency-sources")
+        val classesRoot = projectDirectory.resolve("dependency-classes")
+        val source = sourceRoot.resolve("com/fasterxml/jackson/databind/ObjectMapper.java")
+        Files.createDirectories(source.parent)
+        Files.createDirectories(classesRoot)
+        Files.writeString(
+            source,
+            """
+            package com.fasterxml.jackson.databind;
+
+            public final class ObjectMapper {}
+            """.trimIndent(),
+        )
+        val result =
+            javax.tools.ToolProvider
+                .getSystemJavaCompiler()
+                .run(null, null, null, "--release", "25", "-d", classesRoot.toString(), source.toString())
+        check(result == 0) { "Unable to compile the Jackson API fixture." }
+
+        val jar =
+            projectDirectory.resolve(
+                "repository/${group.replace('.', '/')}/$artifact/$version/$artifact-$version.jar",
+            )
+        JarOutputStream(Files.newOutputStream(jar)).use { output ->
+            Files.walk(classesRoot).use { paths ->
+                paths
+                    .filter(Files::isRegularFile)
+                    .forEach { classFile ->
+                        val entryName =
+                            classesRoot
+                                .relativize(classFile)
+                                .toString()
+                                .replace(classFile.fileSystem.separator, "/")
+                        output.putNextEntry(JarEntry(entryName))
+                        Files.copy(classFile, output)
+                        output.closeEntry()
+                    }
+            }
+        }
     }
 
     private fun writeFile(

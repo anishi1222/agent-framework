@@ -21,7 +21,9 @@ public enum FixtureKind {
     /** Java versioned session envelope and store operations. */
     SESSION_SNAPSHOT("session-snapshot"),
     /** Workflow execution and checkpoint event history. */
-    WORKFLOW_TRACE("workflow-trace");
+    WORKFLOW_TRACE("workflow-trace"),
+    /** Java versioned workflow-checkpoint envelope and resume behavior. */
+    WORKFLOW_CHECKPOINT("workflow-checkpoint");
 
     private final String wireName;
 

@@ -9,7 +9,8 @@
         "role": "user",
         "contents": [
           {"kind": "text", "text": "inspect"},
-          {"kind": "data", "mediaType": "image/png", "uri": "data:image/png;base64,aGVsbG8="}
+          {"kind": "data", "mediaType": "image/png", "uri": "data:image/png;base64,aGVsbG8="},
+          {"kind": "text", "text": "now"}
         ]
       },
       {
@@ -27,7 +28,8 @@
   },
   "expected": {
     "roles": ["user", "assistant", "tool"],
-    "contentKinds": ["text", "data", "reasoning", "functionCall", "functionResult"],
+    "contentKinds": ["text", "data", "text", "reasoning", "functionCall", "functionResult"],
+    "messageTexts": ["inspect now", "", ""],
     "assistantText": "",
     "callResultPairs": [{"callId": "call-001", "resultCount": 1}]
   }

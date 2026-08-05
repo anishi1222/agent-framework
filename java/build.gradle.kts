@@ -25,8 +25,6 @@ val moduleBuildTasks =
         .filterNot { it.name == "agent-framework-bom" }
         .map { "${it.path}:build" }
 
-val nonPublishedModules = setOf("agent-framework-conformance")
-
 tasks.named("build") {
     dependsOn(moduleBuildTasks)
     dependsOn(":agent-framework-bom:build")
@@ -61,7 +59,7 @@ val publishToTestRepository = tasks.register("publishToTestRepository") {
     description = "Publishes every Java artifact to build/test-maven-repository."
 }
 
-subprojects.filterNot { it.name in nonPublishedModules }.forEach { subproject ->
+subprojects.forEach { subproject ->
     subproject.plugins.withId("maven-publish") {
         rootProject.tasks.named("publishToTestRepository") {
             dependsOn(subproject.tasks.named("publishAllPublicationsToLocalTestRepository"))

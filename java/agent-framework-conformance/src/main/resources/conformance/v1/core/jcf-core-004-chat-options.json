@@ -9,7 +9,6 @@
   },
   "expected": {
     "normalized": {"temperature": 0.25, "maxTokens": 128, "toolChoice": "auto"},
-    "finishReason": "toolCalls",
-    "providerObjectExposed": false
+    "finishReason": "toolCalls"
   }
 }

@@ -10,7 +10,7 @@
     {"sequence": 3, "type": "toolInvoked", "callId": "call-stale"},
     {"sequence": 4, "type": "functionResult", "callId": "call-stale", "result": "done"},
     {"sequence": 5, "type": "replayedApprovalDecision", "approvalId": "approval-stale", "approved": true},
-    {"sequence": 6, "type": "approvalReplayRejected", "reason": "authorityConsumed"},
+    {"sequence": 6, "type": "approvalReplayRejected", "approvalId": "approval-stale", "reason": "authorityConsumed"},
     {"sequence": 7, "type": "terminal", "outcome": "success"}
   ],
   "expected": {

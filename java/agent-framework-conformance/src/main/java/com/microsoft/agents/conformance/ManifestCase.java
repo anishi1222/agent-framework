@@ -24,23 +24,49 @@ public record ManifestCase(
         String fixture,
         FixtureKind kind,
         List<String> sourceReferences) {
+    private static final String FIXTURE_ROOT = "conformance/v1/";
+
     /** Creates and validates a manifest case. */
     public ManifestCase {
         FixtureValidation.requireMatch(caseId, FixtureValidation.CASE_ID, "caseId");
         FixtureValidation.requireMatch(suiteId, FixtureValidation.SUITE_ID, "suiteId");
         FixtureValidation.requireNonBlank(matrixStatus, "matrixStatus");
-        FixtureValidation.requireNonBlank(fixture, "fixture");
+        fixture = normalizedFixturePath(fixture);
         Objects.requireNonNull(kind, "kind");
         matrixAreas = List.copyOf(matrixAreas);
         sourceReferences = List.copyOf(sourceReferences);
         if (!caseId.startsWith(suiteId + "-")) {
             throw new ConformanceValidationException(caseId + " does not belong to suite " + suiteId + ".");
         }
-        if (!fixture.startsWith("conformance/v1/") || fixture.contains("..") || !fixture.endsWith(".json")) {
-            throw new ConformanceValidationException("Invalid fixture resource path '" + fixture + "'.");
-        }
         if ("initial-scope".equals(matrixStatus) && matrixAreas.isEmpty()) {
             throw new ConformanceValidationException(caseId + " must name an initial-scope matrix area.");
         }
+    }
+
+    static String normalizedFixturePath(String fixture) {
+        FixtureValidation.requireNonBlank(fixture, "fixture");
+        if (fixture.startsWith("/")
+                || fixture.indexOf('\\') >= 0
+                || !fixture.startsWith(FIXTURE_ROOT)
+                || !fixture.endsWith(".json")) {
+            throw invalidFixturePath(fixture);
+        }
+        String[] segments = fixture.split("/", -1);
+        for (String segment : segments) {
+            if (segment.isEmpty() || ".".equals(segment) || "..".equals(segment)) {
+                throw invalidFixturePath(fixture);
+            }
+        }
+        String normalized = String.join("/", segments);
+        if (!normalized.equals(fixture)) {
+            throw invalidFixturePath(fixture);
+        }
+        return normalized;
+    }
+
+    private static ConformanceValidationException invalidFixturePath(String fixture) {
+        return new ConformanceValidationException("Invalid fixture resource path '" + fixture
+                + "': expected a normalized path under conformance/v1/ with no absolute, "
+                + "backslash, dot, or dot-dot segments.");
     }
 }

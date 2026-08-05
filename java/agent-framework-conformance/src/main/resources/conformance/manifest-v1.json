@@ -173,6 +173,42 @@
       "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "python/packages/core/tests/core/test_function_invocation_logic.py"]
     },
     {
+      "caseId": "JCF-TOOLS-009",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-009-in-flight-duplicate.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-010",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-010-duplicate-pending-approval.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0006-userapproval.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-011",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-011-approval-rejected.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["python/packages/core/tests/core/test_harness_tool_approval.py", "docs/decisions/0006-userapproval.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-012",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-012-cross-view-exactly-once.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md", "java/AGENTS.md"]
+    },
+    {
       "caseId": "JCF-WORKFLOWS-001",
       "suiteId": "JCF-WORKFLOWS",
       "matrixStatus": "initial-scope",
@@ -207,6 +243,15 @@
       "fixture": "conformance/v1/workflows/jcf-workflows-004-checkpoint-resume.json",
       "kind": "workflow-trace",
       "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests/CheckpointResumeTests.cs", "python/packages/core/tests/workflow/test_checkpoint.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-005",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Checkpoint storage / resume"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-005-checkpoint-envelope.json",
+      "kind": "workflow-checkpoint",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md"]
     },
     {
       "caseId": "JCF-PROVIDERS-001",

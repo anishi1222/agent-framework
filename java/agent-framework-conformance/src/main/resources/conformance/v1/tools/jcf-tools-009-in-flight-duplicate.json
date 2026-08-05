@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-009",
+  "kind": "tool-loop",
+  "description": "A duplicate call observed while the original invocation is in flight is rejected without a second execution.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-in-flight", "name": "write", "arguments": {"value": "one"}, "invocationId": "run-009:call-in-flight"},
+    {"sequence": 1, "type": "toolInvoked", "invocationId": "run-009:call-in-flight"},
+    {"sequence": 2, "type": "duplicateFunctionCall", "callId": "call-in-flight", "invocationId": "run-009:call-in-flight"},
+    {"sequence": 3, "type": "duplicateCallRejected", "callId": "call-in-flight", "reason": "invocationInFlight"},
+    {"sequence": 4, "type": "functionResult", "callId": "call-in-flight", "result": "written"},
+    {"sequence": 5, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "duplicateCallRejected": true,
+    "functionResultCount": 1,
+    "invocationCount": 1,
+    "terminalCount": 1
+  }
+}

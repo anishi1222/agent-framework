@@ -9,11 +9,13 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class ConformanceFixtureLoaderTest {
     @Test
@@ -44,10 +46,12 @@ class ConformanceFixtureLoaderTest {
         List<ConformanceFixture> workflowCases = catalog.byKind(FixtureKind.WORKFLOW_TRACE);
 
         // Assert
-        assertThat(catalog.cases()).hasSize(26);
-        assertThat(toolCases).hasSize(8);
+        assertThat(catalog.cases()).hasSize(31);
+        assertThat(toolCases).hasSize(12);
         assertThat(workflowCases).hasSize(4);
+        assertThat(catalog.byKind(FixtureKind.WORKFLOW_CHECKPOINT)).hasSize(1);
         assertThat(catalog.requireCase("JCF-SESSIONS-001")).isInstanceOf(SnapshotFixture.class);
+        assertThat(catalog.requireCase("JCF-WORKFLOWS-005")).isInstanceOf(WorkflowCheckpointFixture.class);
     }
 
     @Test
@@ -105,6 +109,72 @@ class ConformanceFixtureLoaderTest {
                 .hasMessageContaining("Duplicate manifest caseId");
     }
 
+    @ParameterizedTest
+    @ValueSource(
+            strings = {
+                "/conformance/v1/core/example.json",
+                "C:\\conformance\\v1\\core\\example.json",
+                "conformance\\v1\\core\\example.json",
+                "conformance/v1/./core/example.json",
+                "conformance/v1/core/../secret.json",
+                "conformance/v1/core//example.json",
+                "fixtures/v1/core/example.json"
+            })
+    void load_shouldRejectUnsafeFixturePathsBeforeResolverAccess(String fixturePath) {
+        // Arrange
+        AtomicInteger resolverCalls = new AtomicInteger();
+        ByteArrayInputStream manifest =
+                new ByteArrayInputStream(manifestJson(fixturePath).getBytes(StandardCharsets.UTF_8));
+
+        // Act and assert
+        assertThatThrownBy(() -> new ConformanceFixtureLoader().load(manifest, ignored -> {
+                    resolverCalls.incrementAndGet();
+                    return null;
+                }))
+                .isInstanceOf(ConformanceValidationException.class)
+                .hasMessageContaining("Invalid fixture resource path");
+        assertThat(resolverCalls).hasValue(0);
+    }
+
+    @Test
+    void load_shouldRejectDuplicateFixturePathsBeforeResolverAccess() {
+        // Arrange
+        AtomicInteger resolverCalls = new AtomicInteger();
+        String first = manifestCaseJson("JCF-CORE-001", "conformance/v1/core/example.json");
+        String second = manifestCaseJson("JCF-CORE-002", "conformance/v1/core/example.json");
+        ByteArrayInputStream manifest = new ByteArrayInputStream(
+                ("{\"schemaVersion\":1,\"cases\":[" + first + "," + second + "]}").getBytes(StandardCharsets.UTF_8));
+
+        // Act and assert
+        assertThatThrownBy(() -> new ConformanceFixtureLoader().load(manifest, ignored -> {
+                    resolverCalls.incrementAndGet();
+                    return null;
+                }))
+                .isInstanceOf(ConformanceValidationException.class)
+                .hasMessageContaining("Duplicate fixture registration");
+        assertThat(resolverCalls).hasValue(0);
+    }
+
+    @Test
+    void load_shouldAllowValidCustomResolverWithinFixtureRoot() {
+        // Arrange
+        String fixturePath = "conformance/v1/core/jcf-core-001-message-content.json";
+        AtomicInteger resolverCalls = new AtomicInteger();
+        ByteArrayInputStream manifest =
+                new ByteArrayInputStream(manifestJson(fixturePath).getBytes(StandardCharsets.UTF_8));
+
+        // Act
+        ConformanceFixtureCatalog catalog = new ConformanceFixtureLoader().load(manifest, resource -> {
+            resolverCalls.incrementAndGet();
+            assertThat(resource).isEqualTo(fixturePath);
+            return ConformanceFixtureLoaderTest.class.getClassLoader().getResourceAsStream(resource);
+        });
+
+        // Assert
+        assertThat(resolverCalls).hasValue(1);
+        assertThat(catalog.requireCase("JCF-CORE-001")).isInstanceOf(BehaviorFixture.class);
+    }
+
     private static Stream<Arguments> invalidManifests() {
         String caseTemplate = """
                 {"caseId":"JCF-CORE-001","suiteId":"JCF-CORE","matrixStatus":"initial-scope",
@@ -122,6 +192,19 @@ class ConformanceFixtureLoaderTest {
                         "Unknown fixture kind"));
     }
 
+    private static String manifestJson(String fixturePath) {
+        return "{\"schemaVersion\":1,\"cases\":[" + manifestCaseJson("JCF-CORE-001", fixturePath) + "]}";
+    }
+
+    private static String manifestCaseJson(String caseId, String fixturePath) {
+        String escapedPath = fixturePath.replace("\\", "\\\\").replace("\"", "\\\"");
+        return """
+                {"caseId":"%s","suiteId":"JCF-CORE","matrixStatus":"initial-scope",
+                 "matrixAreas":["Chat message / content"],"fixture":"%s",
+                 "kind":"message-content","sourceReferences":["example"]}
+                """.formatted(caseId, escapedPath);
+    }
+
     private static final class ShadowManifestClassLoader extends ClassLoader {
         private ShadowManifestClassLoader(ClassLoader parent) {
             super(parent);
@@ -130,8 +213,7 @@ class ConformanceFixtureLoaderTest {
         @Override
         public InputStream getResourceAsStream(String name) {
             if (ConformanceFixtureLoader.DEFAULT_MANIFEST_RESOURCE.equals(name)) {
-                return new ByteArrayInputStream(
-                        "{\"schemaVersion\":2,\"cases\":[]}".getBytes(StandardCharsets.UTF_8));
+                return new ByteArrayInputStream("{\"schemaVersion\":2,\"cases\":[]}".getBytes(StandardCharsets.UTF_8));
             }
             return super.getResourceAsStream(name);
         }

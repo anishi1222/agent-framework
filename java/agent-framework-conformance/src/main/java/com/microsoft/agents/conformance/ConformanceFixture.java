@@ -5,7 +5,8 @@ package com.microsoft.agents.conformance;
 /**
  * Defines the common immutable surface of every conformance fixture.
  */
-public sealed interface ConformanceFixture permits BehaviorFixture, EventHistoryFixture, SnapshotFixture {
+public sealed interface ConformanceFixture
+        permits BehaviorFixture, EventHistoryFixture, SnapshotFixture, WorkflowCheckpointFixture {
     /**
      * Returns the fixture schema version.
      *

@@ -9,10 +9,11 @@
     {"sequence": 2, "type": "runInterrupted", "reason": "inputRequired"},
     {"sequence": 3, "type": "checkpointLoaded", "checkpointId": "checkpoint-001", "revision": 1},
     {"sequence": 4, "type": "workflowResumed", "checkpointId": "checkpoint-001"},
-    {"sequence": 5, "type": "fanInReleased", "sourceIds": ["left", "right"], "values": ["before", "after"]},
-    {"sequence": 6, "type": "checkpointSaved", "checkpointId": "checkpoint-002", "revision": 2, "previousCheckpointId": "checkpoint-001"},
-    {"sequence": 7, "type": "workflowOutput", "value": ["before", "after"]},
-    {"sequence": 8, "type": "terminal", "outcome": "idle"}
+    {"sequence": 5, "type": "fanInBuffered", "sourceId": "right", "targetId": "join", "value": "after"},
+    {"sequence": 6, "type": "fanInReleased", "sourceIds": ["left", "right"], "targetId": "join", "values": ["before", "after"]},
+    {"sequence": 7, "type": "checkpointSaved", "checkpointId": "checkpoint-002", "revision": 2, "previousCheckpointId": "checkpoint-001"},
+    {"sequence": 8, "type": "workflowOutput", "value": ["before", "after"]},
+    {"sequence": 9, "type": "terminal", "outcome": "idle"}
   ],
   "expected": {
     "restoredCheckpointId": "checkpoint-001",
