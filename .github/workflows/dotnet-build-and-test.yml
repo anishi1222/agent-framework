@@ -117,7 +117,7 @@ jobs:
         uses: ./.github/actions/free-runner-disk-space
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: ${{ github.workspace }}/dotnet/global.json
       - name: Build dotnet solutions
@@ -201,7 +201,7 @@ jobs:
           echo "COSMOSDB_EMULATOR_AVAILABLE=true" >> $env:GITHUB_ENV
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: ${{ github.workspace }}/dotnet/global.json
 
@@ -368,7 +368,7 @@ jobs:
         uses: ./.github/actions/free-runner-disk-space
 
       - name: Setup dotnet
-        uses: actions/setup-dotnet@c2fa09f4bde5ebb9d1777cf28262a3eb3db3ced7 # v5.2.0
+        uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
           global-json-file: ${{ github.workspace }}/dotnet/global.json
 
