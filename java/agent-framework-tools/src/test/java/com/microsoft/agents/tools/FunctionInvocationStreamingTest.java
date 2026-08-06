@@ -12,7 +12,9 @@ import com.microsoft.agents.core.FinishReason;
 import com.microsoft.agents.core.FunctionCallContent;
 import com.microsoft.agents.core.FunctionResultContent;
 import com.microsoft.agents.core.Message;
+import com.microsoft.agents.core.ObservableRunCancellation;
 import com.microsoft.agents.core.Role;
+import com.microsoft.agents.core.RunCancellationRegistration;
 import com.microsoft.agents.core.RunCancelledException;
 import com.microsoft.agents.core.StateValue;
 import com.microsoft.agents.core.TextContent;
@@ -24,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Flow;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -148,6 +151,33 @@ class FunctionInvocationStreamingTest {
                     .hasRootCauseInstanceOf(RunCancelledException.class);
             ignoredProvider.complete(response(Message.text(Role.ASSISTANT, "late")));
             assertThat(source.requests()).hasSize(1);
+        }
+    }
+
+    @Test
+    void cancellationBeforeExecutionStarts_shouldReleaseRunScopedRegistration() {
+        // Arrange
+        TrackingCancellation cancellation = new TrackingCancellation();
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource().enqueue(emptyResponse());
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of())) {
+            FunctionInvocationRun run = loop.start(new FunctionInvocationRequest(
+                    "cancel-before-start",
+                    List.of(Message.text(Role.USER, "cancel")),
+                    FunctionInvocationOptions.defaults(),
+                    cancellation,
+                    Map.of()));
+            boolean cancelled = run.cancel();
+
+            // Assert
+            assertThat(cancelled).isTrue();
+            assertThatThrownBy(() -> run.resultAsync().toCompletableFuture().join())
+                    .isInstanceOf(CompletionException.class)
+                    .hasRootCauseInstanceOf(RunCancelledException.class);
+            assertThat(cancellation.totalRegistrations()).isEqualTo(1);
+            assertThat(cancellation.activeRegistrations()).isZero();
+            assertThat(source.requests()).isEmpty();
         }
     }
 
@@ -308,6 +338,191 @@ class FunctionInvocationStreamingTest {
         }
     }
 
+    @Test
+    void updatePublisher_shouldRetainOnlyConfiguredFiniteUpdatesUntilDemandArrives() {
+        // Arrange
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueueStreaming(List.of(update("one", null), update("two", FinishReason.STOP)));
+        FunctionInvocationOptions options = new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 2);
+        DefaultRunCancellation cancellation = new DefaultRunCancellation();
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of())) {
+            FunctionInvocationRun run = loop.startStreaming(new FunctionInvocationRequest(
+                    "bounded-no-demand", List.of(Message.text(Role.USER, "stream")), options, cancellation, Map.of()));
+            List<ChatResponseUpdate> updates = new ArrayList<>();
+            CompletableFuture<Void> terminal = new CompletableFuture<>();
+            CompletableFuture<Flow.Subscription> subscriptionFuture = new CompletableFuture<>();
+            run.updates().subscribe(new CollectingSubscriber(updates, terminal, subscriptionFuture, 0));
+            Flow.Subscription subscription = subscriptionFuture.join();
+
+            // Assert
+            assertThat(run.resultAsync().toCompletableFuture().join().outcome()).isEqualTo(FunctionLoopOutcome.SUCCESS);
+            assertThat(updates).isEmpty();
+            assertThat(terminal).isNotDone();
+            subscription.request(2);
+            terminal.join();
+            assertThat(updates).extracting(ChatResponseUpdate::text).containsExactly("one", "two");
+            assertThat(cancellation.isCancellationRequested()).isFalse();
+        }
+    }
+
+    @Test
+    void updatePublisher_shouldFailAndCancelRunWhenConfiguredBufferOverflowsWithoutDemand() {
+        // Arrange
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueueStreaming(
+                        List.of(update("one", null), update("two", null), update("three", FinishReason.STOP)));
+        FunctionInvocationOptions options = new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 2);
+        DefaultRunCancellation cancellation = new DefaultRunCancellation();
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of())) {
+            FunctionInvocationRun run = loop.startStreaming(new FunctionInvocationRequest(
+                    "bounded-overflow", List.of(Message.text(Role.USER, "stream")), options, cancellation, Map.of()));
+            CompletableFuture<Throwable> subscriberFailure = new CompletableFuture<>();
+            run.updates().subscribe(new Flow.Subscriber<>() {
+                @Override
+                public void onSubscribe(Flow.Subscription subscription) {}
+
+                @Override
+                public void onNext(ChatResponseUpdate item) {
+                    subscriberFailure.completeExceptionally(
+                            new AssertionError("No update should be delivered without demand."));
+                }
+
+                @Override
+                public void onError(Throwable throwable) {
+                    subscriberFailure.complete(throwable);
+                }
+
+                @Override
+                public void onComplete() {
+                    subscriberFailure.completeExceptionally(
+                            new AssertionError("Overflow must not complete successfully."));
+                }
+            });
+
+            // Assert
+            assertThat(subscriberFailure.join())
+                    .isInstanceOf(StreamingBufferOverflowException.class)
+                    .hasMessageContaining("maxBufferedUpdates=2");
+            assertThatThrownBy(() -> run.resultAsync().toCompletableFuture().join())
+                    .isInstanceOf(CompletionException.class)
+                    .hasRootCauseInstanceOf(StreamingBufferOverflowException.class);
+            assertThat(cancellation.isCancellationRequested()).isTrue();
+        }
+    }
+
+    @Test
+    void subscriptionCancellationAfterRunSuccess_shouldDiscardBufferedUpdatesWithoutCancellingRun() {
+        // Arrange
+        ScriptedToolTurnSource source =
+                new ScriptedToolTurnSource().enqueueStreaming(List.of(update("done", FinishReason.STOP)));
+        DefaultRunCancellation cancellation = new DefaultRunCancellation();
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of())) {
+            FunctionInvocationRun run = loop.startStreaming(new FunctionInvocationRequest(
+                    "cancel-buffer-after-success",
+                    List.of(Message.text(Role.USER, "stream")),
+                    new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 1),
+                    cancellation,
+                    Map.of()));
+            CompletableFuture<Flow.Subscription> subscriptionFuture = new CompletableFuture<>();
+            run.updates().subscribe(new Flow.Subscriber<>() {
+                @Override
+                public void onSubscribe(Flow.Subscription subscription) {
+                    subscriptionFuture.complete(subscription);
+                }
+
+                @Override
+                public void onNext(ChatResponseUpdate item) {}
+
+                @Override
+                public void onError(Throwable throwable) {}
+
+                @Override
+                public void onComplete() {}
+            });
+            assertThat(run.resultAsync().toCompletableFuture().join().outcome()).isEqualTo(FunctionLoopOutcome.SUCCESS);
+            subscriptionFuture.join().cancel();
+
+            // Assert
+            assertThat(cancellation.isCancellationRequested()).isFalse();
+        }
+    }
+
+    @Test
+    void updatePublisher_shouldSupportSlowOneAtATimeDemandAtBufferLimit() {
+        // Arrange
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueueStreaming(
+                        List.of(update("one", null), update("two", null), update("three", FinishReason.STOP)));
+        FunctionInvocationOptions options = new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 1);
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of())) {
+            FunctionInvocationRun run = loop.startStreaming(new FunctionInvocationRequest(
+                    "bounded-slow-demand",
+                    List.of(Message.text(Role.USER, "stream")),
+                    options,
+                    new DefaultRunCancellation(),
+                    Map.of()));
+            List<ChatResponseUpdate> updates = collect(run.updates()).join();
+
+            // Assert
+            assertThat(updates).extracting(ChatResponseUpdate::text).containsExactly("one", "two", "three");
+            assertThat(run.resultAsync().toCompletableFuture().join().outcome()).isEqualTo(FunctionLoopOutcome.SUCCESS);
+        }
+    }
+
+    @Test
+    void completedTurnsAndToolInvocations_shouldReleaseCancellationRegistrations() {
+        // Arrange
+        int invocationCount = 40;
+        TrackingCancellation cancellation = new TrackingCancellation();
+        AtomicInteger invocations = new AtomicInteger();
+        FunctionTool tool = doublingTool(invocations);
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource();
+        for (int index = 0; index < invocationCount; index++) {
+            source.enqueue(response(new Message(
+                    Role.ASSISTANT,
+                    List.of(new FunctionCallContent(
+                            "call-" + index,
+                            "double",
+                            StateValue.object(Map.of("value", StateValue.integer(index))))))));
+        }
+        source.enqueue(ChatResponse.builder().messages(List.of()).build());
+
+        // Act
+        FunctionLoopResult result;
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of(tool))) {
+            result = loop.run(new FunctionInvocationRequest(
+                    "registration-cleanup",
+                    List.of(Message.text(Role.USER, "many")),
+                    new FunctionInvocationOptions(64, null, ToolMode.AUTO, false),
+                    cancellation,
+                    Map.of()));
+        }
+
+        // Assert
+        assertThat(result.outcome()).isEqualTo(FunctionLoopOutcome.SUCCESS);
+        assertThat(invocations).hasValue(invocationCount);
+        assertThat(cancellation.totalRegistrations()).isEqualTo(1);
+        assertThat(cancellation.activeRegistrations()).isZero();
+    }
+
+    @Test
+    void invocationOptions_shouldRequirePositiveFiniteBufferAndPreserveLegacyConstructorDefault() {
+        // Act / Assert
+        assertThatThrownBy(() -> new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 0))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("maxBufferedUpdates");
+        assertThat(new FunctionInvocationOptions(4, null, ToolMode.AUTO, false).maxBufferedUpdates())
+                .isEqualTo(FunctionInvocationOptions.DEFAULT_MAX_BUFFERED_UPDATES);
+    }
+
     private static FunctionTool doublingTool(AtomicInteger invocations) {
         return FunctionTool.create(metadata(), (context, arguments) -> {
             invocations.incrementAndGet();
@@ -316,6 +531,14 @@ class FunctionInvocationStreamingTest {
                     .longValueExact();
             return CompletableFuture.completedFuture(StateValue.integer(value * 2));
         });
+    }
+
+    private static ChatResponseUpdate update(String text, FinishReason finishReason) {
+        var builder = ChatResponseUpdate.builder().role(Role.ASSISTANT).contents(List.of(new TextContent(text)));
+        if (finishReason != null) {
+            builder.finishReason(finishReason);
+        }
+        return builder.build();
     }
 
     private static ToolMetadata metadata() {
@@ -402,5 +625,98 @@ class FunctionInvocationStreamingTest {
 
     private static ChatResponse response(Message message) {
         return ChatResponse.builder().messages(List.of(message)).build();
+    }
+
+    private static ChatResponse emptyResponse() {
+        return ChatResponse.builder().messages(List.of()).build();
+    }
+
+    private static final class CollectingSubscriber implements Flow.Subscriber<ChatResponseUpdate> {
+        private final List<ChatResponseUpdate> updates;
+
+        private final CompletableFuture<Void> terminal;
+
+        private final CompletableFuture<Flow.Subscription> subscriptionFuture;
+
+        private final long initialDemand;
+
+        private CollectingSubscriber(
+                List<ChatResponseUpdate> updates,
+                CompletableFuture<Void> terminal,
+                CompletableFuture<Flow.Subscription> subscriptionFuture,
+                long initialDemand) {
+            this.updates = updates;
+            this.terminal = terminal;
+            this.subscriptionFuture = subscriptionFuture;
+            this.initialDemand = initialDemand;
+        }
+
+        @Override
+        public void onSubscribe(Flow.Subscription subscription) {
+            subscriptionFuture.complete(subscription);
+            if (initialDemand > 0) {
+                subscription.request(initialDemand);
+            }
+        }
+
+        @Override
+        public void onNext(ChatResponseUpdate item) {
+            updates.add(item);
+        }
+
+        @Override
+        public void onError(Throwable throwable) {
+            terminal.completeExceptionally(throwable);
+        }
+
+        @Override
+        public void onComplete() {
+            terminal.complete(null);
+        }
+    }
+
+    private static final class TrackingCancellation implements ObservableRunCancellation {
+        private final DefaultRunCancellation delegate = new DefaultRunCancellation();
+
+        private final AtomicInteger activeRegistrations = new AtomicInteger();
+
+        private final AtomicInteger totalRegistrations = new AtomicInteger();
+
+        @Override
+        public boolean cancel() {
+            return delegate.cancel();
+        }
+
+        @Override
+        public boolean isCancellationRequested() {
+            return delegate.isCancellationRequested();
+        }
+
+        @Override
+        public java.util.concurrent.CompletionStage<Void> cancelledAsync() {
+            return delegate.cancelledAsync();
+        }
+
+        @Override
+        public RunCancellationRegistration register(Runnable listener) {
+            totalRegistrations.incrementAndGet();
+            activeRegistrations.incrementAndGet();
+            RunCancellationRegistration registration = delegate.register(listener);
+            AtomicBoolean active = new AtomicBoolean(true);
+            return () -> {
+                if (active.compareAndSet(true, false)) {
+                    registration.close();
+                    activeRegistrations.decrementAndGet();
+                }
+            };
+        }
+
+        int activeRegistrations() {
+            return activeRegistrations.get();
+        }
+
+        int totalRegistrations() {
+            return totalRegistrations.get();
+        }
     }
 }

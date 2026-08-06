@@ -1,4 +1,7 @@
 // Copyright (c) Microsoft. All rights reserved.
 
-/** Provides workflow graph, execution, event, state, and checkpoint APIs. */
+/**
+ * Provides immutable typed workflow graphs, deterministic execution, bounded events, transactional
+ * state boundaries, and optimistic checkpoint/resume APIs.
+ */
 package com.microsoft.agents.workflows;

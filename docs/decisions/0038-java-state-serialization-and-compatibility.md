@@ -65,6 +65,9 @@ workflow-checkpoint schema:
 - `pendingExecutors` is a semantic set and is sorted by Java `String.compareTo`;
 - `bufferedInputs` is a semantic set keyed by `(targetId, sourceId)` and is sorted first by `targetId`, then by
   `sourceId`, using Java `String.compareTo`; duplicate keys are invalid; and
+- `fanInNextEpochs` maps each uniquely targeted fan-in group to the zero-based epoch it will release next. An incomplete
+  buffered epoch uses that stored value; an already released pending `FanInInput` uses the preceding value. Object-key
+  canonicalization orders target IDs lexically; and
 - every other array is order-bearing and is emitted without reordering, including messages, content, events, outputs,
   fan-in `sourceIds`/`values`, and arrays nested inside application/provider values.
 
@@ -116,9 +119,10 @@ CompletionStage<Void> deleteAsync(Key key, long expectedRevision);
 ```
 
 The concrete `Key` and snapshot type are `SessionKey`/`AgentSessionSnapshot` for sessions and
-`CheckpointKey`/`WorkflowCheckpoint` for workflows. `VersionedSnapshot<T>` is a `core` immutable value. Revision `0`
-means "create only"; every successful replacement returns a greater opaque revision. A mismatched expected revision
-completes exceptionally with `StorageConflictException`; implementations must not perform a last-writer-wins fallback.
+`CheckpointKey`/`WorkflowCheckpoint` for workflows. `VersionedSnapshot<T>` is a `core` immutable value. Expected
+revision `-1` means "create only"; every successful replacement returns a greater opaque revision. A mismatched expected
+revision completes exceptionally with `StorageConflictException`; implementations must not perform a last-writer-wins
+fallback.
 
 Loads return immutable values or detached snapshots whose nested mutable values cannot mutate stored state. Saves and
 deletes are atomic at one key: readers observe either the previous complete value or the replacement, never a partial

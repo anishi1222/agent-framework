@@ -12,6 +12,7 @@
         {"targetId": "join", "value": {"z": 2, "a": 1}, "sourceId": "left"}
       ],
       "status": "inputRequired",
+      "fanInNextEpochs": {"join": 4},
       "previousCheckpointId": null,
       "revision": 1,
       "checkpointId": "checkpoint-001",
@@ -21,7 +22,7 @@
     "documentKind": "workflow-checkpoint",
     "format": "agent-framework-java-state"
   },
-  "encoded": "{\"documentKind\":\"workflow-checkpoint\",\"format\":\"agent-framework-java-state\",\"payload\":{\"bufferedInputs\":[{\"sourceId\":\"left\",\"targetId\":\"join\",\"value\":{\"a\":1,\"z\":2}},{\"sourceId\":\"middle\",\"targetId\":\"join\",\"value\":\"middle\"},{\"sourceId\":\"early\",\"targetId\":\"join0\",\"value\":\"prefixed\"}],\"checkpointId\":\"checkpoint-001\",\"pendingExecutors\":[\"audit\",\"right\"],\"previousCheckpointId\":null,\"revision\":1,\"status\":\"inputRequired\",\"workflowId\":\"workflow-checkpoint-001\"},\"payloadVersion\":1}",
+  "encoded": "{\"documentKind\":\"workflow-checkpoint\",\"format\":\"agent-framework-java-state\",\"payload\":{\"bufferedInputs\":[{\"sourceId\":\"left\",\"targetId\":\"join\",\"value\":{\"a\":1,\"z\":2}},{\"sourceId\":\"middle\",\"targetId\":\"join\",\"value\":\"middle\"},{\"sourceId\":\"early\",\"targetId\":\"join0\",\"value\":\"prefixed\"}],\"checkpointId\":\"checkpoint-001\",\"fanInNextEpochs\":{\"join\":4},\"pendingExecutors\":[\"audit\",\"right\"],\"previousCheckpointId\":null,\"revision\":1,\"status\":\"inputRequired\",\"workflowId\":\"workflow-checkpoint-001\"},\"payloadVersion\":1}",
   "resumeEvents": [
     {"sequence": 0, "type": "checkpointLoaded", "checkpointId": "checkpoint-001", "revision": 1},
     {"sequence": 1, "type": "workflowResumed", "checkpointId": "checkpoint-001"},
@@ -30,7 +31,7 @@
     {"sequence": 4, "type": "executorCompleted", "executorId": "audit", "outputs": ["audited"]},
     {"sequence": 5, "type": "fanInBuffered", "sourceId": "right", "targetId": "join", "value": "after"},
     {"sequence": 6, "type": "executorCompleted", "executorId": "right", "outputs": ["after"]},
-    {"sequence": 7, "type": "fanInReleased", "sourceIds": ["left", "middle", "right"], "targetId": "join", "values": [{"a": 1, "z": 2}, "middle", "after"]},
+    {"sequence": 7, "type": "fanInReleased", "sourceIds": ["left", "middle", "right"], "targetId": "join", "values": [{"a": 1, "z": 2}, "middle", "after"], "epoch": 4},
     {"sequence": 8, "type": "workflowOutput", "value": [{"a": 1, "z": 2}, "middle", "after"]},
     {"sequence": 9, "type": "terminal", "outcome": "idle"}
   ],
@@ -39,6 +40,7 @@
     "decodedPendingExecutors": ["audit", "right"],
     "decodedBufferedInputOrder": ["join:left", "join:middle", "join0:early"],
     "resumeFanInValues": [{"a": 1, "z": 2}, "middle", "after"],
+    "resumeFanInEpoch": 4,
     "terminalOutcome": "idle",
     "deterministicEncoding": true,
     "roundTripWithinJavaV1": true,

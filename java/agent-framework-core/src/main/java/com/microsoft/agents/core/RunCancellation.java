@@ -6,6 +6,10 @@ import java.util.concurrent.CompletionStage;
 
 /**
  * Controls and observes cancellation for one framework run.
+ *
+ * <p>Implementations that support removable listeners should also implement {@link
+ * ObservableRunCancellation}. This lets long-running framework operations release completed
+ * per-operation callbacks without changing this core contract.
  */
 public interface RunCancellation {
     /**

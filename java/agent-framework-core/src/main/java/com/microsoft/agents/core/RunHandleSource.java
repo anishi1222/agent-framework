@@ -27,9 +27,33 @@ public final class RunHandleSource<T> {
 
     private final CompletionStage<Void> cancelledView = cancelled.minimalCompletionStage();
 
+    private final RunCancellationListeners cancellationListeners = new RunCancellationListeners();
+
+    private final RunCancellation delegate;
+
     private final RunCancellation cancellation = new SourceCancellation();
 
     private final RunHandle<T> handle = new SourceHandle();
+
+    private RunCancellationRegistration upstreamCancellationRegistration = () -> {};
+
+    /** Creates a source with a framework-owned cancellation signal. */
+    public RunHandleSource() {
+        this(new DefaultRunCancellation());
+    }
+
+    /**
+     * Creates a source linked to a caller-owned cancellation signal.
+     *
+     * @param cancellation caller-owned cancellation signal
+     */
+    public RunHandleSource(RunCancellation cancellation) {
+        this.delegate = Objects.requireNonNull(cancellation, "cancellation");
+        upstreamCancellationRegistration = RunCancellations.register(delegate, this::cancelRun);
+        if (delegate.isCancellationRequested()) {
+            cancelRun();
+        }
+    }
 
     /**
      * Returns the caller-facing view of this run.
@@ -61,6 +85,8 @@ public final class RunHandleSource<T> {
             return false;
         }
         result.complete(value);
+        cancellationListeners.clear();
+        upstreamCancellationRegistration.close();
         return true;
     }
 
@@ -76,6 +102,8 @@ public final class RunHandleSource<T> {
             return false;
         }
         result.completeExceptionally(failure);
+        cancellationListeners.clear();
+        upstreamCancellationRegistration.close();
         return true;
     }
 
@@ -92,8 +120,9 @@ public final class RunHandleSource<T> {
         if (!state.compareAndSet(TerminalState.RUNNING, TerminalState.CANCELLED)) {
             return false;
         }
-        result.completeExceptionally(new RunCancelledException());
         cancelled.complete(null);
+        cancellationListeners.notifyCancellation();
+        result.completeExceptionally(new RunCancelledException());
         return true;
     }
 
@@ -104,10 +133,17 @@ public final class RunHandleSource<T> {
         CANCELLED
     }
 
-    private final class SourceCancellation implements RunCancellation {
+    private final class SourceCancellation implements ObservableRunCancellation {
         @Override
         public boolean cancel() {
-            return cancelRun();
+            if (state.get() != TerminalState.RUNNING) {
+                return false;
+            }
+            boolean initiated = delegate.cancel();
+            if (initiated || delegate.isCancellationRequested()) {
+                cancelRun();
+            }
+            return initiated && state.get() == TerminalState.CANCELLED;
         }
 
         @Override
@@ -118,6 +154,12 @@ public final class RunHandleSource<T> {
         @Override
         public CompletionStage<Void> cancelledAsync() {
             return cancelledView;
+        }
+
+        @Override
+        public RunCancellationRegistration register(Runnable listener) {
+            return cancellationListeners.register(
+                    () -> state.get() != TerminalState.RUNNING, () -> state.get() == TerminalState.CANCELLED, listener);
         }
     }
 

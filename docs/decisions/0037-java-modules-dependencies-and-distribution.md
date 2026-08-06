@@ -64,7 +64,9 @@ Samples and conformance fixtures are Gradle modules but are not published.
 
 Dependency arrows below mean "the item on the left may depend on the item on the right":
 
-`orchestrations -> workflows -> agents -> tools -> core`
+`workflows -> agents -> tools -> core`
+
+`orchestrations -> agents -> tools -> core`
 
 Additional rules are:
 
@@ -81,8 +83,13 @@ Additional rules are:
 
 The first Java milestone includes `core`, `tools` (including tool approval and resume), `agents` (including session
 storage), the OpenAI and Azure OpenAI/Foundry providers, and `workflows` (including checkpoint/resume).
-`orchestrations` remains a distinct module layered above `workflows`. Protocol and hosting modules are later work and
-are scheduled only after the workflow milestone passes; they cannot be used to satisfy that milestone.
+Azure OpenAI and Microsoft Foundry are published as distinct `agent-framework-azure-openai` and
+`agent-framework-foundry` artifacts because their endpoints, authentication, service versioning, and agent-reference
+semantics are distinct even though both reuse the OpenAI Responses protocol mapping.
+`orchestrations` remains a distinct module layered directly above `agents`; it does not depend on
+`workflows` unless an orchestration implementation actually uses a workflow type. Protocol and hosting
+modules are later work and are scheduled only after the workflow milestone passes; they cannot be used
+to satisfy that milestone.
 
 Spring AI, LangChain4j, and Reactor integrations are optional adapter artifacts, not core dependencies. OpenTelemetry
 instrumentation is likewise optional and follows the wrapper/decorator and semantic-convention direction of

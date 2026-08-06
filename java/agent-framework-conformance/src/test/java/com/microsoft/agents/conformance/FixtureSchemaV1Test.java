@@ -46,6 +46,8 @@ class FixtureSchemaV1Test {
 
     private static final String TOOL_REJECTED = "conformance/v1/tools/jcf-tools-011-approval-rejected.json";
 
+    private static final String TOOL_MIXED_APPROVAL = "conformance/v1/tools/jcf-tools-013-mixed-approval-batch.json";
+
     private static final String WORKFLOW_CORE = "conformance/v1/workflows/jcf-workflows-001-core-events.json";
 
     private static final String WORKFLOW_FAN_IN = "conformance/v1/workflows/jcf-workflows-002-fan-out-in.json";
@@ -110,6 +112,21 @@ class FixtureSchemaV1Test {
     }
 
     @Test
+    void mixedApprovalBatch_shouldRequireOneResultPerCallAndNoRejectedInvocation() {
+        // Arrange
+        EventHistoryFixture fixture = (EventHistoryFixture) loader.loadDefault().requireCase("JCF-TOOLS-013");
+
+        // Act and assert
+        assertThat(fixture.events()).hasSize(11);
+        assertThat(fixture.expected().require("approvedInvocationCount"))
+                .isEqualTo(new ConformanceValue.NumberValue(BigDecimal.ONE));
+        assertThat(fixture.expected().require("rejectedInvocationCount"))
+                .isEqualTo(new ConformanceValue.NumberValue(BigDecimal.ZERO));
+        assertThat(fixture.expected().require("functionResultCount"))
+                .isEqualTo(new ConformanceValue.NumberValue(BigDecimal.valueOf(2)));
+    }
+
+    @Test
     void workflowCheckpointGolden_shouldExposeDeterministicJavaV1EncodingAndResume() throws IOException {
         // Arrange
         ConformanceFixture fixture = loader.loadDefault().requireCase("JCF-WORKFLOWS-005");
@@ -133,13 +150,20 @@ class FixtureSchemaV1Test {
                         .path("sourceId")
                         .textValue())
                 .isEqualTo("middle");
+        assertThat(authored.path("envelope")
+                        .path("payload")
+                        .path("fanInNextEpochs")
+                        .path("join")
+                        .longValue())
+                .isEqualTo(4);
         assertThat(checkpoint.encoded())
                 .isEqualTo("{\"documentKind\":\"workflow-checkpoint\",\"format\":\"agent-framework-java-state\","
                         + "\"payload\":{\"bufferedInputs\":[{\"sourceId\":\"left\",\"targetId\":\"join\","
                         + "\"value\":{\"a\":1,\"z\":2}},{\"sourceId\":\"middle\","
                         + "\"targetId\":\"join\",\"value\":\"middle\"},{\"sourceId\":\"early\","
                         + "\"targetId\":\"join0\",\"value\":\"prefixed\"}],"
-                        + "\"checkpointId\":\"checkpoint-001\",\"pendingExecutors\":[\"audit\",\"right\"],"
+                        + "\"checkpointId\":\"checkpoint-001\",\"fanInNextEpochs\":{\"join\":4},"
+                        + "\"pendingExecutors\":[\"audit\",\"right\"],"
                         + "\"previousCheckpointId\":null,\"revision\":1,\"status\":\"inputRequired\","
                         + "\"workflowId\":\"workflow-checkpoint-001\"},\"payloadVersion\":1}");
         List<String> tupleOrder =
@@ -276,6 +300,21 @@ class FixtureSchemaV1Test {
                         TOOL_REJECTED,
                         "before an affirmative approval decision",
                         FixtureSchemaV1Test::replaceRejectionMessageWithInvocation),
+                invalid(
+                        "tool-rejected-result-missing",
+                        TOOL_REJECTED,
+                        "completes successfully with unresolved call",
+                        FixtureSchemaV1Test::removeRejectedResult),
+                invalid(
+                        "tool-rejected-result-wrong-outcome",
+                        TOOL_REJECTED,
+                        "must use function-result outcome 'rejected'",
+                        root -> ((ObjectNode) events(root).get(4)).put("outcome", "succeeded")),
+                invalid(
+                        "tool-mixed-rejected-invocation-count",
+                        TOOL_MIXED_APPROVAL,
+                        "rejectedInvocationCount' must match derived value 0",
+                        root -> ((ObjectNode) root.path("expected")).put("rejectedInvocationCount", 1)),
                 invalid("tool-unknown-event-type", TOOL_NORMAL, "unknown tool-loop event type", root -> ((ObjectNode)
                                 events(root).get(0))
                         .put("type", "providerEvent")),
@@ -483,6 +522,11 @@ class FixtureSchemaV1Test {
         invocation.put("type", "toolInvoked");
         invocation.put("callId", "call-rejected");
         events(root).set(4, invocation);
+    }
+
+    private static void removeRejectedResult(ObjectNode root) {
+        events(root).remove(4);
+        resequence(events(root));
     }
 
     private static void appendToolEventAfterTerminal(ObjectNode root) {

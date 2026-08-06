@@ -49,7 +49,7 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                 }
         val publicSignatureChecks =
             project.subprojects
-                .filter { it.name in SHARED_MODULES }
+                .filter { it.name in PUBLIC_SIGNATURE_ISOLATED_MODULES }
                 .map { module ->
                     module.tasks.register("checkArchitecturePublicSignatures") {
                         group = "verification"
@@ -180,8 +180,16 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                 }
                 val offending =
                     lines.firstOrNull { line ->
+                        val checkedLine =
+                            if (module.name in AZURE_PROVIDER_MODULES) {
+                                ALLOWED_AZURE_PROVIDER_PUBLIC_TYPES.fold(line) { value, allowed ->
+                                    value.replace(allowed, "")
+                                }
+                            } else {
+                                line
+                            }
                         (line.startsWith("public ") || line.startsWith("protected ")) &&
-                            FORBIDDEN_PUBLIC_API_PREFIXES.any(line::contains)
+                            FORBIDDEN_PUBLIC_API_PREFIXES.any(checkedLine::contains)
                     }
                 if (offending != null) {
                     val forbidden = requireNotNull(FORBIDDEN_PUBLIC_API_PREFIXES.firstOrNull(offending::contains))
@@ -370,6 +378,25 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                 "agent-framework-agents",
                 "agent-framework-workflows",
                 "agent-framework-orchestrations",
+            )
+
+        val PUBLIC_SIGNATURE_ISOLATED_MODULES =
+            SHARED_MODULES +
+                setOf(
+                    "agent-framework-openai",
+                    "agent-framework-azure-openai",
+                    "agent-framework-foundry",
+                )
+
+        val AZURE_PROVIDER_MODULES =
+            setOf(
+                "agent-framework-azure-openai",
+                "agent-framework-foundry",
+            )
+
+        val ALLOWED_AZURE_PROVIDER_PUBLIC_TYPES =
+            setOf(
+                "com.azure.core.credential.TokenCredential",
             )
 
         val MODULE_POLICIES = JavaModulePolicies.policies

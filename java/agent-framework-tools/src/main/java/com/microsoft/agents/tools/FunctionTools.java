@@ -2,6 +2,7 @@
 
 package com.microsoft.agents.tools;
 
+import com.microsoft.agents.core.RunCancellations;
 import com.microsoft.agents.core.RunCancelledException;
 import com.microsoft.agents.core.StateValue;
 import java.lang.invoke.MethodHandle;
@@ -301,7 +302,12 @@ public final class FunctionTools {
             }
             return stage.thenApply(result -> {
                 StateValue nonNull = Objects.requireNonNull(result, "function tool result");
-                ToolSchemaValidator.validate(nonNull, metadata.outputSchema(), "$result");
+                try {
+                    ToolSchemaValidator.validate(nonNull, metadata.outputSchema(), "$result");
+                } catch (ToolBindingException failure) {
+                    throw new ToolOutputValidationException(
+                            "Function tool result does not satisfy the declared output schema.", failure);
+                }
                 return nonNull;
             });
         }
@@ -360,10 +366,11 @@ public final class FunctionTools {
                     },
                     context.executor());
             CompletableFuture<StateValue> result = new CompletableFuture<>();
-            context.cancellation().cancelledAsync().whenComplete((ignored, cancellationFailure) -> {
+            var cancellationRegistration = RunCancellations.register(context.cancellation(), () -> {
                 invoked.cancel(true);
                 result.completeExceptionally(new RunCancelledException());
             });
+            result.whenComplete((ignored, failure) -> cancellationRegistration.close());
             invoked.whenComplete((rawResult, invocationFailure) -> {
                 if (invocationFailure != null) {
                     result.completeExceptionally(unwrap(invocationFailure));
@@ -427,6 +434,9 @@ public final class FunctionTools {
             }
             try {
                 target.complete(ToolValueCodec.encode(returnBinding.valueType(), rawResult, "$result"));
+            } catch (ToolBindingException exception) {
+                target.completeExceptionally(new ToolOutputValidationException(
+                        "Function tool result cannot be encoded as the declared return type.", exception));
             } catch (RuntimeException exception) {
                 target.completeExceptionally(exception);
             }

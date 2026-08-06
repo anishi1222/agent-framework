@@ -27,9 +27,15 @@ compile and runtime version. Production and test compilation use `--release 25`.
 - `agent-framework-agents`: agents, chat client, sessions, middleware, context, and history; depends
   on tools and core.
 - `agent-framework-workflows`: workflow graph and checkpoint runtime; depends on agents.
-- `agent-framework-orchestrations`: higher-level orchestration patterns; depends on workflows.
+- `agent-framework-orchestrations`: higher-level orchestration patterns; depends directly on agents.
 - `agent-framework-observability`: optional telemetry decorators; depends inward on agents.
 - `agent-framework-reactor-adapter`: optional Reactor bridge; depends inward on agents.
+- `agent-framework-openai`: official OpenAI Responses provider adapter; depends inward on agents and
+  keeps SDK types out of public signatures.
+- `agent-framework-azure-openai`: Azure OpenAI Responses adapter with API-key or Azure Identity
+  authentication; reuses the OpenAI protocol boundary without exposing Azure service models.
+- `agent-framework-foundry`: Microsoft Foundry direct-model and existing-agent adapter using the GA
+  Azure AI Projects/Agents SDKs; persistent thread/run and hosted-session surfaces are deferred.
 - `agent-framework-conformance`: non-published, implementation-neutral fixtures and test support;
   production modules must not depend on it.
 - `agent-framework-bom`: Java Platform constraints for the shared release version.

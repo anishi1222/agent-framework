@@ -10,8 +10,8 @@
     "payload": {"sessionId": "session-cas", "state": {"value": "first"}}
   },
   "operations": [
-    {"operation": "save", "expectedRevision": 0, "outcome": "success", "returnedRevision": 1},
-    {"operation": "save", "expectedRevision": 0, "value": "stale", "outcome": "storageConflict"},
+    {"operation": "save", "expectedRevision": -1, "outcome": "success", "returnedRevision": 1},
+    {"operation": "save", "expectedRevision": -1, "value": "stale", "outcome": "storageConflict"},
     {"operation": "load", "outcome": "success"}
   ],
   "expected": {

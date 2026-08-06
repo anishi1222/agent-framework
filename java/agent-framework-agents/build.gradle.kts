@@ -7,4 +7,6 @@ description = "Provider-neutral chat client, agent, session, middleware, context
 dependencies {
     api(project(":agent-framework-core"))
     api(project(":agent-framework-tools"))
+
+    testImplementation(project(":agent-framework-conformance"))
 }

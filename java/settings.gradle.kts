@@ -23,6 +23,9 @@ include(
     "agent-framework-orchestrations",
     "agent-framework-observability",
     "agent-framework-reactor-adapter",
+    "agent-framework-openai",
+    "agent-framework-azure-openai",
+    "agent-framework-foundry",
     "agent-framework-conformance",
     "agent-framework-bom",
 )

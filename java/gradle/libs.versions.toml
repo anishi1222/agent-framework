@@ -1,22 +1,36 @@
 [versions]
 assertj = "3.27.7"
+azure-ai-openai = "1.0.0-beta.16"
+azure-ai-agents = "2.2.0"
+azure-ai-projects = "2.2.0"
+azure-identity = "1.18.4"
 checkstyle = "13.9.0"
 jacoco = "0.8.15"
 jackson = "2.22.1"
 junit = "6.1.2"
 mockito = "5.23.0"
+openai-java = "4.50.0"
+opentelemetry = "1.64.0"
 palantir-java-format = "2.80.0"
 reactor = "3.8.6"
 spotless = "8.9.0"
 
 [libraries]
 assertj-core = { module = "org.assertj:assertj-core", version.ref = "assertj" }
+azure-ai-openai = { module = "com.azure:azure-ai-openai", version.ref = "azure-ai-openai" }
+azure-ai-agents = { module = "com.azure:azure-ai-agents", version.ref = "azure-ai-agents" }
+azure-ai-projects = { module = "com.azure:azure-ai-projects", version.ref = "azure-ai-projects" }
+azure-identity = { module = "com.azure:azure-identity", version.ref = "azure-identity" }
 jackson-databind = { module = "com.fasterxml.jackson.core:jackson-databind", version.ref = "jackson" }
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
 mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
+openai-java = { module = "com.openai:openai-java", version.ref = "openai-java" }
+opentelemetry-api = { module = "io.opentelemetry:opentelemetry-api", version.ref = "opentelemetry" }
+opentelemetry-sdk = { module = "io.opentelemetry:opentelemetry-sdk", version.ref = "opentelemetry" }
+opentelemetry-sdk-testing = { module = "io.opentelemetry:opentelemetry-sdk-testing", version.ref = "opentelemetry" }
 reactor-core = { module = "io.projectreactor:reactor-core", version.ref = "reactor" }
 
 [plugins]

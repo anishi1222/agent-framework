@@ -10,7 +10,7 @@
     "payload": {"sessionId": "session-detached", "state": {"values": ["original"]}}
   },
   "operations": [
-    {"operation": "save", "expectedRevision": 0},
+    {"operation": "save", "expectedRevision": -1},
     {"operation": "mutateCallerCopy", "append": "changed"},
     {"operation": "load"},
     {"operation": "mutateLoadedCopy", "append": "changed-again"},

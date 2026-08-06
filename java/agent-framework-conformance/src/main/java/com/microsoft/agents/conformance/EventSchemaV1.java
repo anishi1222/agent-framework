@@ -204,9 +204,26 @@ final class EventSchemaV1 {
                 JsonSchemaV1.requireText(event, "errorType", sourceName);
             }
             case "functionResult" -> {
-                event(event, sourceName, List.of("callId", "result"), List.of("mode", "isError"));
+                event(
+                        event,
+                        sourceName,
+                        List.of("callId", "result"),
+                        List.of("mode", "isError", "invocationId", "outcome"));
                 JsonSchemaV1.requireText(event, "callId", sourceName);
                 JsonSchemaV1.require(event, "result", sourceName);
+                optionalText(event, "invocationId", sourceName);
+                String outcome = optionalText(event, "outcome", sourceName);
+                if (outcome != null
+                        && !Set.of(
+                                        "succeeded",
+                                        "failed",
+                                        "outputValidationFailed",
+                                        "cancelled",
+                                        "rejected",
+                                        "duplicate")
+                                .contains(outcome)) {
+                    throw JsonSchemaV1.invalid(sourceName + " has unknown function-result outcome '" + outcome + "'.");
+                }
                 if (event.has("isError")) {
                     JsonSchemaV1.requireBoolean(event, "isError", sourceName);
                 }
@@ -297,10 +314,13 @@ final class EventSchemaV1 {
                 JsonSchemaV1.require(event, "value", sourceName);
             }
             case "fanInReleased" -> {
-                event(event, sourceName, List.of("sourceIds", "targetId", "values"), List.of());
+                event(event, sourceName, List.of("sourceIds", "targetId", "values"), List.of("epoch"));
                 JsonSchemaV1.requireTextArray(event, "sourceIds", sourceName, true, true);
                 JsonSchemaV1.requireText(event, "targetId", sourceName);
                 JsonSchemaV1.requireArray(event, "values", sourceName, true);
+                if (event.has("epoch")) {
+                    JsonSchemaV1.requireNonNegativeInteger(event, "epoch", sourceName);
+                }
             }
             case "executorFailed" -> {
                 event(event, sourceName, List.of("executorId", "errorType"), List.of());
@@ -432,20 +452,40 @@ final class EventSchemaV1 {
                     throw JsonSchemaV1.invalid(
                             sourceName + " records duplicate result for call '" + call.callId + "'.");
                 }
-                if (!call.invoked) {
-                    throw JsonSchemaV1.invalid(sourceName
-                            + " result is not correlated to an active invocation for call '" + call.callId + "'.");
+                String invocationId = optionalText(event, "invocationId", sourceName);
+                if (invocationId != null) {
+                    requireInvocation(invocationId, call, sourceName);
                 }
+                String outcome = optionalText(event, "outcome", sourceName);
+                boolean rejected = false;
                 if (call.approvalId != null) {
                     Approval approval = state.approvals.get(call.approvalId);
-                    if (Boolean.FALSE.equals(approval.decision)) {
+                    rejected = Boolean.FALSE.equals(approval.decision);
+                }
+                if (rejected) {
+                    if (call.invoked) {
                         throw JsonSchemaV1.invalid(
-                                sourceName + " records a result for rejected call '" + call.callId + "'.");
+                                sourceName + " records execution for rejected call '" + call.callId + "'.");
+                    }
+                    if (!"rejected".equals(outcome)) {
+                        throw JsonSchemaV1.invalid(sourceName + " rejected call '" + call.callId
+                                + "' must use function-result outcome 'rejected'.");
+                    }
+                } else {
+                    if (!call.invoked) {
+                        throw JsonSchemaV1.invalid(sourceName
+                                + " result is not correlated to an active invocation for call '" + call.callId + "'.");
+                    }
+                    if ("rejected".equals(outcome)) {
+                        throw JsonSchemaV1.invalid(sourceName + " non-rejected call '" + call.callId
+                                + "' cannot use function-result outcome 'rejected'.");
                     }
                 }
                 call.resultRecorded = true;
+                call.resultOutcome = outcome == null ? (call.failed ? "failed" : "succeeded") : outcome;
                 state.resultOrder.add(call.callId);
                 state.results.put(call.callId, event.get("result").deepCopy());
+                state.resultOutcomes.put(call.callId, call.resultOutcome);
                 state.lastResultSequence = event.get("sequence").intValue();
             }
             case "approvalRequested" -> {
@@ -537,9 +577,7 @@ final class EventSchemaV1 {
         }
         if ("success".equals(state.finalOutcome)) {
             for (ToolCall call : state.calls.values()) {
-                boolean rejected =
-                        call.approvalId != null && Boolean.FALSE.equals(state.approvals.get(call.approvalId).decision);
-                if (!call.resultRecorded && !rejected) {
+                if (!call.resultRecorded) {
                     throw JsonSchemaV1.invalid(
                             sourceName + " completes successfully with unresolved call '" + call.callId + "'.");
                 }
@@ -631,6 +669,9 @@ final class EventSchemaV1 {
                     throw JsonSchemaV1.invalid(sourceName + " fan-in values must align with sourceIds.");
                 }
                 state.fanInReleaseCount++;
+                if (event.has("epoch")) {
+                    state.fanInEpochs.add(event.get("epoch").longValue());
+                }
                 state.fanInValues = event.get("values").deepCopy();
                 state.bufferedSources.remove(targetId);
             }
@@ -818,6 +859,7 @@ final class EventSchemaV1 {
             List<String> callOrder,
             List<String> resultOrder,
             Map<String, JsonNode> results,
+            Map<String, String> resultOutcomes,
             String assistantText,
             int terminalCount,
             List<String> terminalOutcomes,
@@ -839,6 +881,7 @@ final class EventSchemaV1 {
             LinkedHashMap<String, JsonNode> resultCopies = new LinkedHashMap<>();
             results.forEach((key, value) -> resultCopies.put(key, value.deepCopy()));
             results = Map.copyOf(resultCopies);
+            resultOutcomes = Map.copyOf(resultOutcomes);
             terminalOutcomes = List.copyOf(terminalOutcomes);
             approvalDecisions = Map.copyOf(approvalDecisions);
             invocationIds = Map.copyOf(invocationIds);
@@ -881,6 +924,7 @@ final class EventSchemaV1 {
             List<JsonNode> outputs,
             Map<String, Integer> fanOutDeliveries,
             int fanInReleaseCount,
+            List<Long> fanInEpochs,
             List<JsonNode> fanInValues,
             List<String> failedExecutors,
             List<String> cancelledExecutors,
@@ -894,6 +938,7 @@ final class EventSchemaV1 {
             executorOrder = List.copyOf(executorOrder);
             outputs = copyNodes(outputs);
             fanOutDeliveries = Map.copyOf(fanOutDeliveries);
+            fanInEpochs = List.copyOf(fanInEpochs);
             fanInValues = copyNodes(fanInValues);
             failedExecutors = List.copyOf(failedExecutors);
             cancelledExecutors = List.copyOf(cancelledExecutors);
@@ -933,6 +978,8 @@ final class EventSchemaV1 {
         private final List<String> resultOrder = new ArrayList<>();
 
         private final Map<String, JsonNode> results = new LinkedHashMap<>();
+
+        private final Map<String, String> resultOutcomes = new LinkedHashMap<>();
 
         private final StringBuilder assistantText = new StringBuilder();
 
@@ -988,6 +1035,7 @@ final class EventSchemaV1 {
                     callOrder,
                     resultOrder,
                     results,
+                    resultOutcomes,
                     assistantText.toString(),
                     terminalCount,
                     terminalOutcomes,
@@ -1021,6 +1069,8 @@ final class EventSchemaV1 {
         private boolean failed;
 
         private boolean resultRecorded;
+
+        private String resultOutcome;
 
         private ToolCall(String callId, String invocationId, String logicalRunId, List<String> executionViews) {
             this.callId = callId;
@@ -1080,6 +1130,8 @@ final class EventSchemaV1 {
 
         private JsonNode fanInValues;
 
+        private final List<Long> fanInEpochs = new ArrayList<>();
+
         private int fanInReleaseCount;
 
         private int duplicateBufferedValues;
@@ -1110,6 +1162,7 @@ final class EventSchemaV1 {
                     outputs,
                     fanOutDeliveries,
                     fanInReleaseCount,
+                    fanInEpochs,
                     fanInValues == null ? List.of() : copyNodes(fanInValues),
                     failedExecutors,
                     cancelledExecutors,

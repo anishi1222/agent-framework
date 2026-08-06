@@ -173,7 +173,7 @@ class ToolsConformanceTest {
                 fixtureMetadata(string(callEvent.require("name")), ToolApprovalMode.NEVER_REQUIRE),
                 (context, arguments) -> {
                     invocations.incrementAndGet();
-                    throw new IllegalStateException("sensitive detail");
+                    throw new ToolUserException("sensitive detail");
                 });
         ScriptedToolTurnSource source = new ScriptedToolTurnSource()
                 .enqueue(response(call(callEvent, tool.name())))
@@ -410,7 +410,7 @@ class ToolsConformanceTest {
     }
 
     @Test
-    void jcfTools011_shouldAcceptRejectionWithoutInvokingOrProducingFunctionResult() {
+    void jcfTools011_shouldProduceCorrelatedRejectedResultWithoutInvoking() {
         // Arrange
         EventHistoryFixture fixture = events("JCF-TOOLS-011");
         AtomicInteger invocations = new AtomicInteger();
@@ -430,11 +430,19 @@ class ToolsConformanceTest {
                     .result();
 
             // Assert
-            assertThat(rejected.assistantText())
-                    .endsWith(string(event(fixture, "assistantMessage").require("text")));
             assertThat(invocations).hasValue(integer(fixture.expected().require("invocationCount")));
             assertThat(functionResults(rejected))
-                    .hasSize(integer(fixture.expected().require("functionResultCount")));
+                    .hasSize(integer(fixture.expected().require("functionResultCount")))
+                    .first()
+                    .satisfies(functionResult -> {
+                        assertThat(functionResult.callId())
+                                .isEqualTo(string(fixture.expected().require("resultCallId")));
+                        assertThat(functionResult.metadata())
+                                .containsEntry(
+                                        "invocationId", state(fixture.expected().require("resultInvocationId")))
+                                .containsEntry(
+                                        "outcome", state(fixture.expected().require("resultOutcome")));
+                    });
             assertThat(bool(fixture.expected().require("toolExecuted"))).isFalse();
         }
     }
@@ -474,6 +482,64 @@ class ToolsConformanceTest {
             assertThat(synchronous.logicalRunId() + ":"
                             + functionResults(synchronous).getFirst().callId())
                     .isEqualTo(string(fixture.expected().require("sharedInvocationId")));
+        }
+    }
+
+    @Test
+    void jcfTools013_shouldExecuteOnlyApprovedBodyAndStreamEveryCorrelatedResultInModelOrder() {
+        // Arrange
+        EventHistoryFixture fixture = events("JCF-TOOLS-013");
+        AtomicInteger approvedInvocations = new AtomicInteger();
+        AtomicInteger rejectedInvocations = new AtomicInteger();
+        FunctionTool approvedTool = fixtureTool(
+                "approved",
+                ToolApprovalMode.ALWAYS_REQUIRE,
+                state(eventByCallId(fixture, "functionResult", "call-approved").require("result")),
+                approvedInvocations);
+        FunctionTool rejectedTool = fixtureTool(
+                "rejected", ToolApprovalMode.ALWAYS_REQUIRE, StateValue.string("unused"), rejectedInvocations);
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueue(response(new Message(
+                        Role.ASSISTANT,
+                        List.of(
+                                new FunctionCallContent(
+                                        "call-approved", approvedTool.name(), StateValue.object(Map.of())),
+                                new FunctionCallContent(
+                                        "call-rejected", rejectedTool.name(), StateValue.object(Map.of()))))))
+                .enqueueStreaming(List.of(ChatResponseUpdate.builder()
+                        .role(Role.ASSISTANT)
+                        .finishReason(FinishReason.STOP)
+                        .build()));
+
+        // Act
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of(approvedTool, rejectedTool))) {
+            FunctionLoopResult suspended =
+                    loop.run(new FunctionInvocationRequest("run-013", List.of(Message.text(Role.USER, "mixed"))));
+            FunctionInvocationRun run = loop.resumeStreaming(
+                    suspended,
+                    List.of(
+                            ToolApprovalDecision.approve(
+                                    suspended.approvalRequests().get(0)),
+                            ToolApprovalDecision.reject(
+                                    suspended.approvalRequests().get(1), "declined")));
+            List<ChatResponseUpdate> updates = collect(run.updates()).join();
+            FunctionLoopResult completed = run.result();
+
+            // Assert
+            assertThat(approvedInvocations).hasValue(integer(fixture.expected().require("approvedInvocationCount")));
+            assertThat(rejectedInvocations).hasValue(integer(fixture.expected().require("rejectedInvocationCount")));
+            assertThat(functionResults(completed))
+                    .extracting(FunctionResultContent::callId)
+                    .containsExactlyElementsOf(strings(array(fixture.expected().require("resultOrder"))));
+            assertThat(functionResults(completed))
+                    .extracting(result -> result.metadata().get("outcome"))
+                    .containsExactlyElementsOf(states(array(fixture.expected().require("resultOutcomes"))));
+            assertThat(updates.stream()
+                            .flatMap(update -> update.contents().stream())
+                            .filter(FunctionResultContent.class::isInstance)
+                            .map(FunctionResultContent.class::cast))
+                    .extracting(FunctionResultContent::callId)
+                    .containsExactlyElementsOf(strings(array(fixture.expected().require("resultOrder"))));
         }
     }
 
@@ -575,6 +641,14 @@ class ToolsConformanceTest {
                 .orElseThrow();
     }
 
+    private static ConformanceValue.ObjectValue eventByCallId(EventHistoryFixture fixture, String type, String callId) {
+        return fixture.events().stream()
+                .filter(value -> string(value.require("type")).equals(type))
+                .filter(value -> textOr(value, "callId", "").equals(callId))
+                .findFirst()
+                .orElseThrow();
+    }
+
     private static List<ConformanceValue.ObjectValue> eventsOf(EventHistoryFixture fixture, String type) {
         return fixture.events().stream()
                 .filter(value -> string(value.require("type")).equals(type))
@@ -655,5 +729,9 @@ class ToolsConformanceTest {
 
     private static List<String> strings(ConformanceValue.ArrayValue value) {
         return value.values().stream().map(ToolsConformanceTest::string).toList();
+    }
+
+    private static List<StateValue> states(ConformanceValue.ArrayValue value) {
+        return value.values().stream().map(ToolsConformanceTest::state).toList();
     }
 }

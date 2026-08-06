@@ -6,12 +6,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.microsoft.agents.core.ChatResponse;
+import com.microsoft.agents.core.DefaultRunCancellation;
 import com.microsoft.agents.core.FunctionCallContent;
 import com.microsoft.agents.core.FunctionResultContent;
 import com.microsoft.agents.core.Message;
 import com.microsoft.agents.core.ReasoningContent;
 import com.microsoft.agents.core.Role;
 import com.microsoft.agents.core.StateValue;
+import com.microsoft.agents.core.ValidationException;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -22,6 +24,47 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
 class FunctionInvocationLoopTest {
+    @Test
+    void finiteConvenienceRun_shouldDiscardMoreUpdatesThanStreamingBufferLimitAndPreserveHistory() {
+        // Arrange
+        AtomicInteger invocations = new AtomicInteger();
+        FunctionTool lookup = stringTool("lookup", ToolApprovalMode.NEVER_REQUIRE, arguments -> {
+            invocations.incrementAndGet();
+            return StateValue.string("found");
+        });
+        Message calls = new Message(
+                Role.ASSISTANT,
+                List.of(
+                        call("call-1", "lookup", "value", StateValue.string("one")),
+                        call("call-2", "lookup", "value", StateValue.string("two")),
+                        call("call-3", "lookup", "value", StateValue.string("three"))));
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueue(response(calls))
+                .enqueue(response(Message.text(Role.ASSISTANT, "done")));
+        FunctionInvocationOptions options = new FunctionInvocationOptions(4, null, ToolMode.AUTO, false, 2);
+        FunctionInvocationRequest request = new FunctionInvocationRequest(
+                "finite-discard",
+                List.of(Message.text(Role.USER, "lookup all")),
+                options,
+                new DefaultRunCancellation(),
+                Map.of());
+
+        // Act
+        FunctionLoopResult result;
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of(lookup))) {
+            result = loop.runAsync(request).toCompletableFuture().join();
+        }
+
+        // Assert
+        assertThat(invocations).hasValue(3);
+        assertThat(result.outcome()).isEqualTo(FunctionLoopOutcome.SUCCESS);
+        assertThat(result.history())
+                .extracting(Message::role)
+                .containsExactly(Role.USER, Role.ASSISTANT, Role.TOOL, Role.ASSISTANT);
+        assertThat(functionResults(result)).hasSize(3);
+        assertThat(result.assistantText()).contains("done");
+    }
+
     @Test
     void run_shouldInvokeOneToolAndPreserveCallResultAssistantHistoryOrder() {
         // Arrange
@@ -161,13 +204,13 @@ class FunctionInvocationLoopTest {
     }
 
     @Test
-    void expectedArgumentAndFunctionErrors_shouldBecomeCorrelatedSanitizedResults() {
+    void argumentAndRecoverableToolUserErrors_shouldBecomeCorrelatedSanitizedResults() {
         // Arrange
         AtomicInteger bodies = new AtomicInteger();
         FunctionTool failing =
                 FunctionTool.create(metadata("fail", ToolApprovalMode.NEVER_REQUIRE), (context, arguments) -> {
                     bodies.incrementAndGet();
-                    throw new IllegalStateException("secret failure detail");
+                    throw new ToolUserException("secret failure detail");
                 });
         ScriptedToolTurnSource source = new ScriptedToolTurnSource()
                 .enqueue(response(call("call-bind", "fail", StateValue.string("not-an-object"))))
@@ -188,6 +231,39 @@ class FunctionInvocationLoopTest {
         assertThat(results.get(0).result()).isEqualTo(StateValue.string("Error: Argument parsing failed."));
         assertThat(results.get(1).result()).isEqualTo(StateValue.string("Error: Function failed."));
         assertThat(results.get(1).error()).doesNotContain("secret failure detail");
+    }
+
+    @Test
+    void outputSchemaValidationFailure_shouldUseDedicatedCorrelatedOutcomeAndMessage() {
+        // Arrange
+        AtomicInteger bodies = new AtomicInteger();
+        FunctionTool invalidOutput = FunctionTool.create(
+                metadata("invalid-output", ToolApprovalMode.NEVER_REQUIRE), (context, arguments) -> {
+                    bodies.incrementAndGet();
+                    return CompletableFuture.completedFuture(StateValue.bool(true));
+                });
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource()
+                .enqueue(response(call("call-output", "invalid-output", "value", StateValue.string("input"))))
+                .enqueue(emptyResponse());
+
+        // Act
+        FunctionLoopResult result;
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of(invalidOutput))) {
+            result = loop.run(new FunctionInvocationRequest(
+                    "run-output-validation", List.of(Message.text(Role.USER, "validate"))));
+        }
+
+        // Assert
+        assertThat(bodies).hasValue(1);
+        assertThat(functionResults(result)).singleElement().satisfies(functionResult -> {
+            assertThat(functionResult.callId()).isEqualTo("call-output");
+            assertThat(functionResult.result())
+                    .isEqualTo(StateValue.string("Error: Tool output schema validation failed."));
+            assertThat(functionResult.error()).isEqualTo("Error: Tool output schema validation failed.");
+            assertThat(functionResult.metadata())
+                    .containsEntry("invocationId", StateValue.string("run-output-validation:call-output"))
+                    .containsEntry("outcome", StateValue.string("outputValidationFailed"));
+        });
     }
 
     @Test
@@ -275,6 +351,57 @@ class FunctionInvocationLoopTest {
                     .rootCause()
                     .isInstanceOf(ToolInvocationException.class)
                     .hasMessageContaining("framework invariant failed");
+        }
+
+        IllegalStateException unexpectedFailure = new IllegalStateException("unexpected tool bug");
+        FunctionTool unexpectedFailureTool = FunctionTool.create(
+                metadata("unexpected", ToolApprovalMode.NEVER_REQUIRE),
+                (context, arguments) -> CompletableFuture.failedFuture(unexpectedFailure));
+        ScriptedToolTurnSource unexpectedSource = new ScriptedToolTurnSource()
+                .enqueue(response(call("call-unexpected", "unexpected", "value", StateValue.string("one"))));
+        try (FunctionInvocationLoop loop =
+                new FunctionInvocationLoop(unexpectedSource, List.of(unexpectedFailureTool))) {
+            assertThatThrownBy(() -> loop.runAsync(new FunctionInvocationRequest(
+                                    "run-unexpected-failure", List.of(Message.text(Role.USER, "fail"))))
+                            .toCompletableFuture()
+                            .join())
+                    .isInstanceOf(java.util.concurrent.CompletionException.class)
+                    .rootCause()
+                    .isSameAs(unexpectedFailure);
+        }
+
+        ValidationException frameworkValidation = new ValidationException("framework validation failure");
+        FunctionTool validationFailureTool = FunctionTool.create(
+                metadata("validation", ToolApprovalMode.NEVER_REQUIRE),
+                (context, arguments) -> CompletableFuture.failedFuture(frameworkValidation));
+        ScriptedToolTurnSource validationSource = new ScriptedToolTurnSource()
+                .enqueue(response(call("call-validation", "validation", "value", StateValue.string("one"))));
+        try (FunctionInvocationLoop loop =
+                new FunctionInvocationLoop(validationSource, List.of(validationFailureTool))) {
+            assertThatThrownBy(() -> loop.runAsync(new FunctionInvocationRequest(
+                                    "run-framework-validation", List.of(Message.text(Role.USER, "fail"))))
+                            .toCompletableFuture()
+                            .join())
+                    .isInstanceOf(java.util.concurrent.CompletionException.class)
+                    .rootCause()
+                    .isSameAs(frameworkValidation);
+        }
+
+        AssertionError fatalFailure = new AssertionError("fatal tool error");
+        FunctionTool fatalTool =
+                FunctionTool.create(metadata("fatal", ToolApprovalMode.NEVER_REQUIRE), (context, arguments) -> {
+                    throw fatalFailure;
+                });
+        ScriptedToolTurnSource fatalSource = new ScriptedToolTurnSource()
+                .enqueue(response(call("call-fatal", "fatal", "value", StateValue.string("one"))));
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(fatalSource, List.of(fatalTool))) {
+            assertThatThrownBy(() -> loop.runAsync(new FunctionInvocationRequest(
+                                    "run-fatal-error", List.of(Message.text(Role.USER, "fail"))))
+                            .toCompletableFuture()
+                            .join())
+                    .isInstanceOf(java.util.concurrent.CompletionException.class)
+                    .rootCause()
+                    .isSameAs(fatalFailure);
         }
     }
 

@@ -1,8 +1,11 @@
 # Java Port — Terminology & API Mapping
 
 **Task ID:** `java-parity-baseline`
-**Status:** Core model and tool runtime implemented; agent, session, and workflow runtime APIs remain proposed.
-**Last updated:** 2026-08-05
+**Status:** Core model, tools, agents, sessions, context/history providers, context compaction,
+middleware, approval continuation, workflow and orchestration runtimes, optional OpenTelemetry
+observability, and the initial Responses providers are implemented; other external providers remain
+proposed.
+**Last updated:** 2026-08-06
 
 This document provides the cross-language name mapping so that the Java implementation uses
 consistent terminology and so that reviewers can navigate between .NET, Python, and Java surfaces
@@ -18,7 +21,7 @@ initial/later-parity status.
 
 | Canonical concept | .NET term / symbol | Python term / symbol | Java (proposed) | Notes |
 |---|---|---|---|---|
-| **Agent** | `AIAgent` (abstract class) | `Agent` / `BaseAgent` | `Agent` (interface) / `BaseAgent` (abstract base) | `Agent` is the Java public contract; `BaseAgent` is optional implementation convenience. |
+| **Agent** | `AIAgent` (abstract class) | `Agent` / `BaseAgent` | `Agent<T>` (interface) / `BaseAgent<T>` (abstract base) | Implemented. `Agent` is the Java public contract; `BaseAgent` is optional implementation convenience. |
 | **Agent session** | `AgentSession` | `AgentSession` | `AgentSession` | Identical across all three languages. |
 | **Agent response** | `AgentResponse<T>` | `AgentResponse` | `AgentResponse<T>` | .NET generic; Python untyped. Java uses generic. |
 | **Response update (streaming)** | `AgentResponseUpdate` | `AgentResponseUpdate` | `AgentResponseUpdate` | One chunk of a streaming run. |
@@ -26,14 +29,15 @@ initial/later-parity status.
 | **Chat message** | `ChatMessage` (from `Microsoft.Extensions.AI`) | `Message` | `Message` | External `Microsoft.Extensions.AI` in .NET; internal in Python. Java owns its own type. |
 | **Message content** | `AIContent` | `Content` | `Content` | Java follows Python name; it is more concise. |
 | **Message role** | `ChatRole` (external) | `Role` / `RoleLiteral` | `Role` | Java follows Python name. |
-| **Chat client** | `IChatClient` (external interface) | `BaseChatClient` | `com.microsoft.agents.agents.ChatClient` (interface) | Java uses a plain interface name; no `I` prefix per Java conventions. |
-| **Context provider** | `AIContextProvider` | `ContextProvider` | `ContextProvider` | Java follows Python name. |
-| **History provider** | `ChatHistoryProvider` | `HistoryProvider` | `HistoryProvider` | Java follows Python name. |
-| **In-memory history** | `InMemoryChatHistoryProvider` | `InMemoryHistoryProvider` | `InMemoryHistoryProvider` | Java follows Python name. |
-| **Session store** | `AgentSessionStore` | `SessionStore` | `SessionStore` | Java follows Python name. |
+| **Chat client** | `IChatClient` (external interface) | `BaseChatClient` | `com.microsoft.agents.agents.ChatClient` (interface) | Implemented with immutable `ChatClientRequest`; Java uses no `I` prefix. |
+| **OpenAI chat client** | `Microsoft.Agents.AI.OpenAI` adapter | `OpenAIChatClient` | `com.microsoft.agents.providers.openai.OpenAIChatClient` | Implemented against the official OpenAI Responses SDK with framework-owned options, cancellation, bounded streaming, and no SDK types in public signatures. |
+| **Context provider** | `AIContextProvider` | `ContextProvider` | `ContextProvider` | Implemented; Java follows Python name. |
+| **History provider** | `ChatHistoryProvider` | `HistoryProvider` | `HistoryProvider` | Implemented; Java follows Python name. |
+| **In-memory history** | `InMemoryChatHistoryProvider` | `InMemoryHistoryProvider` | `InMemoryHistoryProvider` | Implemented as the default session-backed history provider. |
+| **Session store** | `AgentSessionStore` | `SessionStore` | `SessionStore` | Implemented CAS SPI; Java follows Python name. |
 | **Versioned snapshot** | store-specific ETag/version | store-specific | `VersionedSnapshot<T>` | Immutable snapshot plus opaque optimistic revision. |
 | **Run cancellation** | `CancellationToken` | task cancellation | `RunCancellation`, `RunHandle<T>` | Explicit per-run cancellation; `CompletionStage` alone is not the cancellation controller. |
-| **Session context** | `AgentRunContext` | `SessionContext` | `AgentRunContext` | Java follows .NET name. |
+| **Session context** | `AgentRunContext` | `SessionContext` | `AgentRunContext` | Implemented with explicit session, contribution, run, and cancellation propagation. |
 | **Session state bag** | `AgentSessionStateBag` | `AgentSession.state` (dict-like) | `AgentSessionStateBag` | Java follows .NET. |
 | **Agent metadata** | `AIAgentMetadata` | `Agent.id`, `Agent.description` properties | `AgentMetadata` | Simplified name in Java. |
 | **Function tool** | `AIFunction` | `FunctionTool` | `FunctionTool` | Java follows Python name. |
@@ -44,20 +48,28 @@ initial/later-parity status.
 | **Middleware (chat)** | `IChatClientMiddleware` / MEAI | `ChatMiddleware` | `ChatMiddleware` | Java follows Python name. |
 | **Middleware (function)** | `FunctionInvokingChatClient` pipeline | `FunctionMiddleware` | `FunctionMiddleware` | Java follows Python name. |
 | **Middleware termination** | — | `MiddlewareTermination` | `MiddlewareTermination` | Java follows Python. |
-| **Workflow** | `Workflow` | `Workflow` | `Workflow` | Identical. |
-| **Workflow builder** | `WorkflowBuilder` | `WorkflowBuilder` | `WorkflowBuilder` | Identical. |
+| **Workflow** | `Workflow` | `Workflow` | `Workflow<I,O>` | Implemented as an immutable, reusable, strongly typed graph and run surface. |
+| **Workflow builder** | `WorkflowBuilder` | `WorkflowBuilder` | `WorkflowBuilder<I,O>` | Implemented with typed node/edge methods plus complete graph validation. |
 | **Workflow agent** | `WorkflowHostAgent` | `WorkflowAgent` | `WorkflowAgent` | Java follows Python name. |
-| **Executor** | `Executor` | `Executor` | `Executor` | Identical. |
-| **Function executor** | `FunctionExecutor` | `FunctionExecutor` | `FunctionExecutor` | Identical. |
+| **Executor** | `Executor` | `Executor` | `Executor<I,O>` | Implemented with runtime input/output types and optional checkpoint codecs. |
+| **Function executor** | `FunctionExecutor` | `FunctionExecutor` | `FunctionExecutor<I,O>` | Implemented synchronous and asynchronous adapters. |
 | **Edge** | `Edge` | `Edge` | `Edge` | Identical. |
 | **Fan-in / fan-out** | `FanInEdgeData` / `FanOutEdgeData` | `FanInEdgeGroup` / `FanOutEdgeGroup` | `FanInEdge` / `FanOutEdge` | Simplified Java names. |
-| **Checkpoint storage** | `CheckpointManager` + `CheckpointInfo` | `CheckpointStorage` | `CheckpointStorage` | Java follows Python name. |
-| **Workflow event** | `WorkflowEvent` | `WorkflowEvent` | `WorkflowEvent` | Identical. |
+| **Checkpoint storage** | `CheckpointManager` + `CheckpointInfo` | `CheckpointStorage` | `CheckpointStorage` | Implemented CAS SPI with stable capabilities and atomic checkpoint/ledger commit contract. |
+| **Workflow event** | `WorkflowEvent` | `WorkflowEvent` | `WorkflowEvent` | Implemented with deterministic sequence, run/node/superstep/correlation IDs. |
+| **Orchestration participant** | `AIAgent` bound by orchestration builders | `SupportsAgentRun` participant | `OrchestrationParticipant` | Implemented immutable descriptor with a stable explicit ID and caller-owned `Agent<?>`. |
+| **Orchestration run/result/event** | workflow run plus orchestration outputs | workflow run plus output/intermediate events | `Orchestration<O>`, `OrchestrationRunOptions`, `OrchestrationResult<O>`, `OrchestrationEvent`, `OrchestrationResumeInput` | Implemented finite/streaming/sync/`RunHandle` run and one-time process-local resume views, deterministic event IDs, typed outcomes, and bounded continuation retention. |
+| **Sequential orchestration** | `SequentialWorkflowBuilder` | `SequentialBuilder` | `SequentialOrchestration` | Implemented shared/previous-response history, typed transform, stop/continue policies, and duplicate-safe transcript. |
+| **Concurrent orchestration** | `ConcurrentWorkflowBuilder` | `ConcurrentBuilder` | `ConcurrentOrchestration<O>` | Implemented declaration-ordered aggregation, fail-fast sibling cancellation/skipped events, race-independent error-over-input precedence, collect-errors outcome, and isolated sessions. |
+| **Handoff orchestration** | `HandoffWorkflowBuilder` | `HandoffBuilder` | `HandoffOrchestration` | Implemented typed function-call routing, registered targets/transitions, independent unknown/disallowed/self/loop policies, and resumable input-required outcomes. |
+| **Group-chat orchestration** | `GroupChatWorkflowBuilder`, `GroupChatManager` | `GroupChatBuilder`, orchestrators | `GroupChatOrchestration`, `GroupChatManager`, `GroupChatSelector` | Implemented round-robin/agent selectors, exact-ID validation, transitions, repetition policy, transcript, and turn bound. |
+| **Magentic orchestration** | `MagenticWorkflowBuilder`, `MagenticProgressLedger` | `MagenticBuilder`, `MagenticContext` | `MagenticOrchestration`, `MagenticManager`, `MagenticLedger` | Implemented typed plan/task/assessment state, stall detection, bounded replanning, and solved/unsolved outcomes. |
 | **Skills provider** | `Microsoft.Agents.AI.Mcp.Skills` | `SkillsProvider`, `SkillsSource` | `SkillsProvider`, `SkillsSource` | Java follows Python name. |
 | **Skill** | (MCP-oriented in .NET) | `Skill`, `ClassSkill`, `InlineSkill`, `FileSkill`, `MCPSkill` | `Skill` hierarchy | Java follows Python. |
 | **Harness agent** | `HarnessAgent` | `create_harness_agent` | `HarnessAgent` | Java follows .NET class name. |
-| **Compaction strategy** | — | `CompactionStrategy` | `CompactionStrategy` | Java follows Python. |
-| **Tokenizer** | — | `TokenizerProtocol` | `Tokenizer` (interface) | Simplified Java name. |
+| **Compaction strategy** | `CompactionStrategy` | `CompactionStrategy` | `CompactionStrategy` | Implemented as an immutable asynchronous SPI with result/audit metadata. |
+| **Token estimator** | tokenizer delegate | `TokenizerProtocol` | `TokenEstimator` (interface) | Implemented with deterministic heuristic and provider override. |
+| **OpenTelemetry observability** | `OpenTelemetryAgent` + MEAI/workflow telemetry | `AgentTelemetryLayer`, `ChatTelemetryLayer` | `OpenTelemetryAgent`, `OpenTelemetryChatClient`, `OpenTelemetryFunctionMiddleware`, `OpenTelemetryWorkflow` | Optional outward module; implemented against stable OTel Java `1.64.0`. |
 | **A2A agent (client)** | `A2AAgent` | `A2AAgent` | `A2AAgent` | Identical. |
 | **A2A executor (server)** | `A2AAgentSession` bridging | `A2AExecutor` | `A2AExecutor` | Java follows Python name. |
 | **AG-UI** | `AGUIEndpointRouteBuilderExtensions` | `AgentFrameworkAgent` (AG-UI wrapper) | `AGUIAdapter` | Java introduces adapter name. |
@@ -78,12 +90,14 @@ initial/later-parity status.
 | Neutral models / serialization / concurrency | `Microsoft.Agents.AI.Abstractions` | `agent-framework-core` | `com.microsoft.agents:agent-framework-core` · `com.microsoft.agents.core` |
 | Tool metadata / runtime | `Microsoft.Extensions.AI` + `Microsoft.Agents.AI` | `agent-framework-core` | `com.microsoft.agents:agent-framework-tools` · `com.microsoft.agents.tools` |
 | Agent / session runtime | `Microsoft.Agents.AI.Abstractions` + `Microsoft.Agents.AI` | `agent-framework-core` | `com.microsoft.agents:agent-framework-agents` · `com.microsoft.agents.agents` |
-| OpenAI provider | `Microsoft.Agents.AI.OpenAI` | `agent-framework-openai` (bundled in core) | `com.microsoft.agents:agent-framework-openai` · `com.microsoft.agents.providers.openai` |
-| Foundry / Azure AI provider | `Microsoft.Agents.AI.Foundry` | `agent-framework-foundry` | `com.microsoft.agents:agent-framework-foundry` · `com.microsoft.agents.providers.foundry` |
+| OpenAI provider | `Microsoft.Agents.AI.OpenAI` | `agent-framework-openai` (bundled in core) | `com.microsoft.agents:agent-framework-openai` · `com.microsoft.agents.providers.openai` (implemented; `JCF-PROVIDERS-001` bound) |
+| Azure OpenAI provider | `Microsoft.Agents.AI.OpenAI` Azure configuration | OpenAI-compatible Azure configuration | `com.microsoft.agents:agent-framework-azure-openai` · `com.microsoft.agents.providers.azureopenai` (implemented) |
+| Foundry / Azure AI provider | `Microsoft.Agents.AI.Foundry` | `agent-framework-foundry` | `com.microsoft.agents:agent-framework-foundry` · `com.microsoft.agents.providers.foundry` (implemented; `JCF-PROVIDERS-002` bound) |
 | Anthropic provider | `Microsoft.Agents.AI.Anthropic` | `agent-framework-anthropic` | `com.microsoft.agents:agent-framework-anthropic` · `com.microsoft.agents.providers.anthropic` |
 | AWS Bedrock provider | — | `agent-framework-bedrock` | `com.microsoft.agents:agent-framework-bedrock` · `com.microsoft.agents.providers.bedrock` |
 | Workflow engine | `Microsoft.Agents.AI.Workflows` | `agent-framework-core` (built-in) | `com.microsoft.agents:agent-framework-workflows` · `com.microsoft.agents.workflows` |
-| Orchestrations | `Microsoft.Agents.AI.Workflows` builders | `agent-framework-orchestrations` | `com.microsoft.agents:agent-framework-orchestrations` · `com.microsoft.agents.orchestrations` |
+| Orchestrations | `Microsoft.Agents.AI.Workflows` builders | `agent-framework-orchestrations` | `com.microsoft.agents:agent-framework-orchestrations` · `com.microsoft.agents.orchestrations` (implemented) |
+| Observability | `Microsoft.Agents.AI` + MEAI/workflow telemetry | core observability layers | `com.microsoft.agents:agent-framework-observability` · `com.microsoft.agents.observability` |
 | Hosting abstractions | `Microsoft.Agents.AI.Hosting` | `agent-framework-hosting` | `com.microsoft.agents:agent-framework-hosting` · `com.microsoft.agents.hosting` |
 | A2A protocol | `Microsoft.Agents.AI.A2A` + `Hosting.A2A` | `agent-framework-a2a` + `agent-framework-hosting-a2a` | `com.microsoft.agents:agent-framework-a2a` · `com.microsoft.agents.protocols.a2a` |
 | AG-UI protocol | `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` | `agent-framework-ag-ui` | `com.microsoft.agents:agent-framework-agui` · `com.microsoft.agents.protocols.agui` |
@@ -115,7 +129,7 @@ HTTP/SSE/WebSocket hosting is later-parity, while ASP.NET Core-specific route-ex
 - Streaming: `AsyncIterator[T]`.
 - DI: manual / `poe`-based.
 
-### Java (proposed — no preview APIs, Java 25+)
+### Java (implemented execution surface — no preview APIs, Java 25+)
 - Async: `CompletionStage<T>` / `CompletableFuture<T>`.  `Async` suffix on methods.
 - Streaming: `Flow.Publisher<T>` (JDK 9+ reactive streams). `Streaming` suffix on methods.
 - Sync facade: unsuffixed operation names such as `run(...)` and `complete(...)`.
@@ -140,19 +154,46 @@ HTTP/SSE/WebSocket hosting is later-parity, while ASP.NET Core-specific route-ex
 |---|---|
 | `com.microsoft.agents.core.RunCancellation` | `cancel()`, `isCancellationRequested()`, `cancelledAsync()` |
 | `com.microsoft.agents.core.RunHandle<T>` | `resultAsync()`, `cancellation()`, `cancel()` |
+| `com.microsoft.agents.agents.ChatClient` | `completeAsync(...)`, `completeStreaming(...)`, `complete(...)`, `startCompletion(...)` |
+| `com.microsoft.agents.providers.openai.OpenAIChatClient` | `builder()`, `options()`, provider-neutral finite/streaming `ChatClient` methods, and `close()` |
+| `com.microsoft.agents.providers.openai.OpenAIChatClientOptions` | immutable `builder()` for API key, model, base URL, organization, project, timeout, retries, bounded updates, and response defaults |
+| `com.microsoft.agents.providers.openai.OpenAITransport` | injected framework-owned finite/streaming boundary; nested request/response/event values contain no SDK types |
+| `com.microsoft.agents.agents.Agent<T>` | `runAsync(...)`, `runStreaming(...)`, `run(...)`, `startRun(...)` for `String`, `Message`, and `List<Message>` inputs |
+| `com.microsoft.agents.agents.AgentRunContext` | immutable `runId`, agent metadata, start time, input messages, run options, cancellation, and metadata |
+| `com.microsoft.agents.agents.AgentSession` | immutable `sessionId`; thread-safe state/history mutation; detached `state()`, `messages()`, and `snapshot()` views |
 | `com.microsoft.agents.agents.SessionStore` | `loadAsync(SessionKey)`, `saveAsync(SessionKey, AgentSessionSnapshot, long expectedRevision)`, `deleteAsync(SessionKey, long expectedRevision)` |
+| `com.microsoft.agents.agents.ContextProvider` / `HistoryProvider` | ordered `provideAsync(...)` / `completedAsync(...)`; chronological `loadMessagesAsync(...)` / `appendMessagesAsync(...)` |
+| `com.microsoft.agents.agents.context.CompactionStrategy` | `compactAsync(CompactionRequest)` returning immutable `CompactionResult` / `CompactionAudit`; built-in sliding-window, truncation, token-budget, and summarization strategies |
+| `com.microsoft.agents.agents.context.TokenEstimator` | `estimateTokens(Message)` plus saturating ordered-list default; `heuristic()` supplies the deterministic provider-neutral fallback |
+| `com.microsoft.agents.agents.context.CompactingHistoryProvider` / `PersistedHistoryCompactor` | request-only history projection by default; explicit one-load/one-CAS persisted replacement |
+| `com.microsoft.agents.agents.AgentMiddleware` / `ChatMiddleware` / `FunctionMiddleware` | finite and streaming interception with immutable contexts and single-use `next` contracts |
+| `com.microsoft.agents.agents.ChatAgent` session continuation | `createSessionAsync()`, `loadSessionAsync(...)`, session-aware `runAsync(...)` / `runStreaming(...)`, `pendingContinuation(...)`, `resumeAsync(...)`, `resumeStreaming(...)`, and synchronous `resume(...)` |
 | `com.microsoft.agents.workflows.StorageCapability` | `ATOMIC_CHECKPOINT_AND_LEDGER` |
 | `com.microsoft.agents.workflows.CheckpointStorage` | `capabilities()`, `loadAsync(CheckpointKey)`, `saveAsync(CheckpointKey, WorkflowCheckpoint, long expectedRevision)`, `deleteAsync(CheckpointKey, long expectedRevision)`, `commitAsync(CheckpointCommit, long expectedRevision)` |
+| `com.microsoft.agents.workflows.Workflow<I,O>` | `runAsync(...)`, `runStreaming(...)`, `run(...)`, `startRun(...)`, `resumeAsync(...)`, `resumeStreaming(...)`, `resume(...)`, and `startResume(...)` |
+| `com.microsoft.agents.workflows.StateKey<T>` / `WorkflowState` | explicit `StateCodec<T>`, optional deterministic reducer, immutable boundary snapshots, and typed `get(...)` |
 | `com.microsoft.agents.tools.ToolInvocationLedger` | `lookupAsync(InvocationId)`, `recordPendingAsync(InvocationRecord, long expectedRevision)`, `recordOutcomeAsync(InvocationOutcome, long expectedRevision)` |
 | `com.microsoft.agents.core.StateCodec<T>` | `typeId()`, `currentVersion()`, `encode(T)`, `migrate(StateValue, int fromVersion, int toVersion)`, `decode(StateValue, int version)` |
 | `com.microsoft.agents.core.SerializationLimits` | `maxDocumentBytes()`, `maxNestingDepth()`, `maxStringLength()`, `maxNumericTokenLength()`, `maxCollectionEntries()` |
+| `com.microsoft.agents.observability.AgentFrameworkTelemetry` | application-owned `OpenTelemetry`, provider name, identifier policy, content policy, and no global SDK mutation |
+| `com.microsoft.agents.observability.OpenTelemetryAgent` / `OpenTelemetryChatClient` / `OpenTelemetryFunctionMiddleware` / `OpenTelemetryWorkflow` | GenAI spans, events, metrics, async/Flow context propagation, operation-specific duplicate suppression, and exactly-once stream closure |
 
 Store loads return `CompletionStage<Optional<VersionedSnapshot<T>>>`; writes return
-`CompletionStage<VersionedSnapshot<T>>`. All writes are compare-and-set operations. `commitAsync` is part of every
+`CompletionStage<VersionedSnapshot<T>>`. Session expected revision `-1` is create-only; positive
+revisions are opaque compare-and-set versions and conflicts never silently retry. `commitAsync` is part of every
 `CheckpointStorage` SPI. Callers inspect `capabilities()` before effects and choose transactional ledger
 (`ATOMIC_CHECKPOINT_AND_LEDGER` + `commitAsync`), provider idempotency, or the documented at-least-once path. An adapter
 without `ATOMIC_CHECKPOINT_AND_LEDGER` fails `commitAsync` with `UnsupportedStorageCapabilityException` before writing
 the checkpoint, ledger, or any other effect; callers do not invoke it speculatively and fall back afterward.
+
+The runtime binds `JCF-AGENTS-001` through `JCF-AGENTS-003`, `JCF-SESSIONS-001` through
+`JCF-SESSIONS-003`, and `JCF-PROVIDERS-001` / `JCF-PROVIDERS-002` to production execution, provider
+ordering, middleware nesting/termination, version-1 session serialization, optimistic conflict
+handling, detached in-memory storage, and the real OpenAI and Foundry
+client/request/response/continuation mapping paths.
+Persisted approval continuation is at-least-once for external effects after restart unless a durable
+invocation ledger or provider idempotency capability is configured; the current `ChatAgent` session
+surface does not claim exactly-once restart behavior.
 
 ---
 
@@ -188,13 +229,15 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 | `com.microsoft.agents.tools.FunctionTool` / `Tool` / `@ToolMethod` | `Microsoft.Extensions.AI.AIFunction` (external) | [`python/packages/core/agent_framework/_tools.py`](../../python/packages/core/agent_framework/_tools.py) · `FunctionTool` |
 | `com.microsoft.agents.tools.ToolApprovalRequest` / `ToolApprovalDecision` | approval middleware state | [`python/packages/core/agent_framework/_middleware.py`](../../python/packages/core/agent_framework/_middleware.py) · `ToolApprovalState` |
 | `com.microsoft.agents.tools.ToolInvocationLedger` / `InvocationId` | function-invocation state | function-invocation state |
-| `com.microsoft.agents.agents.ChatClient` | `Microsoft.Extensions.AI.IChatClient` (external) | [`python/packages/core/agent_framework/_clients.py`](../../python/packages/core/agent_framework/_clients.py) · `BaseChatClient` |
-| `com.microsoft.agents.agents.Agent` / `BaseAgent` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs) | [`python/packages/core/agent_framework/_agents.py`](../../python/packages/core/agent_framework/_agents.py) |
+| `com.microsoft.agents.agents.ChatClient` / `ChatClientRequest` | `Microsoft.Extensions.AI.IChatClient` (external) | [`python/packages/core/agent_framework/_clients.py`](../../python/packages/core/agent_framework/_clients.py) · `BaseChatClient` |
+| `com.microsoft.agents.agents.Agent<T>` / `BaseAgent<T>` / `ChatAgent` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgent.cs) and `ChatClientAgent` | [`python/packages/core/agent_framework/_agents.py`](../../python/packages/core/agent_framework/_agents.py) |
 | `com.microsoft.agents.agents.AgentSession` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AgentSession.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AgentSession.cs) | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) |
 | `com.microsoft.agents.agents.ContextProvider` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/AIContextProvider.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/AIContextProvider.cs) | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) · `ContextProvider` |
 | `com.microsoft.agents.agents.HistoryProvider` | [`dotnet/src/Microsoft.Agents.AI.Abstractions/ChatHistoryProvider.cs`](../../dotnet/src/Microsoft.Agents.AI.Abstractions/ChatHistoryProvider.cs) | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) · `HistoryProvider` |
 | `com.microsoft.agents.agents.AgentMiddleware` | (extension pattern) | [`python/packages/core/agent_framework/_middleware.py`](../../python/packages/core/agent_framework/_middleware.py) · `AgentMiddleware` |
 | `com.microsoft.agents.agents.SessionStore` | [`dotnet/src/Microsoft.Agents.AI.Hosting/AgentSessionStore.cs`](../../dotnet/src/Microsoft.Agents.AI.Hosting/AgentSessionStore.cs) | [`python/packages/core/agent_framework/_sessions.py`](../../python/packages/core/agent_framework/_sessions.py) · `SessionStore` |
+| `com.microsoft.agents.agents.context.*` | [`dotnet/src/Microsoft.Agents.AI/Compaction/`](../../dotnet/src/Microsoft.Agents.AI/Compaction/) | [`python/packages/core/agent_framework/_compaction.py`](../../python/packages/core/agent_framework/_compaction.py) |
+| `com.microsoft.agents.observability.*` | [`dotnet/src/Microsoft.Agents.AI/OpenTelemetryAgent.cs`](../../dotnet/src/Microsoft.Agents.AI/OpenTelemetryAgent.cs) | [`python/packages/core/agent_framework/observability.py`](../../python/packages/core/agent_framework/observability.py) |
 
 ### Workflow
 
@@ -206,6 +249,17 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 | `com.microsoft.agents.workflows.FunctionExecutor` | [`dotnet/src/Microsoft.Agents.AI.Workflows/FunctionExecutor.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/FunctionExecutor.cs) | [`python/packages/core/agent_framework/_workflows/_function_executor.py`](../../python/packages/core/agent_framework/_workflows/_function_executor.py) |
 | `com.microsoft.agents.workflows.WorkflowEvent` | [`dotnet/src/Microsoft.Agents.AI.Workflows/WorkflowEvent.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/WorkflowEvent.cs) | [`python/packages/core/agent_framework/_workflows/_events.py`](../../python/packages/core/agent_framework/_workflows/_events.py) |
 | `com.microsoft.agents.workflows.CheckpointStorage` | [`dotnet/src/Microsoft.Agents.AI.Workflows/CheckpointManager.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/CheckpointManager.cs) | [`python/packages/core/agent_framework/_workflows/_checkpoint.py`](../../python/packages/core/agent_framework/_workflows/_checkpoint.py) |
+
+### Orchestrations
+
+| Java (implemented) | .NET source | Python source |
+|---|---|---|
+| `Orchestration<O>` / `OrchestrationResult<O>` / `OrchestrationEvent` | [`dotnet/src/Microsoft.Agents.AI.Workflows/OrchestrationBuilderBase.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/OrchestrationBuilderBase.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_workflow_builder.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_workflow_builder.py) |
+| `SequentialOrchestration` | [`dotnet/src/Microsoft.Agents.AI.Workflows/SequentialWorkflowBuilder.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/SequentialWorkflowBuilder.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_sequential.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_sequential.py) |
+| `ConcurrentOrchestration<O>` | [`dotnet/src/Microsoft.Agents.AI.Workflows/ConcurrentWorkflowBuilder.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/ConcurrentWorkflowBuilder.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_concurrent.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_concurrent.py) |
+| `HandoffOrchestration` / `HandoffRequest` / `HandoffTarget` | [`dotnet/src/Microsoft.Agents.AI.Workflows/HandoffWorkflowBuilder.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/HandoffWorkflowBuilder.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_handoff.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_handoff.py) |
+| `GroupChatOrchestration` / `GroupChatManager` / selectors | [`dotnet/src/Microsoft.Agents.AI.Workflows/GroupChatWorkflowBuilder.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/GroupChatWorkflowBuilder.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_group_chat.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_group_chat.py) |
+| `MagenticOrchestration` / `MagenticManager` / `MagenticLedger` | [`dotnet/src/Microsoft.Agents.AI.Workflows/MagenticWorkflowBuilder.cs`](../../dotnet/src/Microsoft.Agents.AI.Workflows/MagenticWorkflowBuilder.cs) | [`python/packages/orchestrations/agent_framework_orchestrations/_magentic.py`](../../python/packages/orchestrations/agent_framework_orchestrations/_magentic.py) |
 
 ### Protocols
 
@@ -220,8 +274,9 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 
 | Java (proposed) | .NET source | Python source |
 |---|---|---|
-| `com.microsoft.agents.providers.openai.OpenAIChatClient` | [`dotnet/src/Microsoft.Agents.AI.OpenAI/`](../../dotnet/src/Microsoft.Agents.AI.OpenAI/) | [`python/packages/openai/`](../../python/packages/openai/) |
-| `com.microsoft.agents.providers.foundry.FoundryAgent` | [`dotnet/src/Microsoft.Agents.AI.Foundry/FoundryAgent.cs`](../../dotnet/src/Microsoft.Agents.AI.Foundry/FoundryAgent.cs) | [`python/packages/foundry/`](../../python/packages/foundry/) |
+| `com.microsoft.agents.providers.openai.OpenAIChatClient`, `OpenAIChatClientOptions`, `OpenAIResponseOptions`, and `OpenAITransport` (implemented) | [`dotnet/src/Microsoft.Agents.AI.OpenAI/`](../../dotnet/src/Microsoft.Agents.AI.OpenAI/) | [`python/packages/openai/`](../../python/packages/openai/) |
+| `com.microsoft.agents.providers.azureopenai.AzureOpenAIChatClient`, `AzureOpenAIChatClientOptions`, and `AzureOpenAITransport` (implemented) | [`dotnet/src/Microsoft.Agents.AI.OpenAI/`](../../dotnet/src/Microsoft.Agents.AI.OpenAI/) | [`python/packages/openai/`](../../python/packages/openai/) Azure tests |
+| `com.microsoft.agents.providers.foundry.FoundryChatClient`, `FoundryChatClientOptions`, `FoundryAgent`, and `FoundryTransport` (implemented) | [`dotnet/src/Microsoft.Agents.AI.Foundry/FoundryAgent.cs`](../../dotnet/src/Microsoft.Agents.AI.Foundry/FoundryAgent.cs) | [`python/packages/foundry/`](../../python/packages/foundry/) |
 | `com.microsoft.agents.providers.anthropic.AnthropicChatClient` | [`dotnet/src/Microsoft.Agents.AI.Anthropic/`](../../dotnet/src/Microsoft.Agents.AI.Anthropic/) | [`python/packages/anthropic/`](../../python/packages/anthropic/) |
 
 ---
@@ -239,11 +294,18 @@ the checkpoint, ledger, or any other effect; callers do not invoke it speculativ
 | `StorageConflictException` | `AgentFrameworkException` | Failed optimistic revision/CAS write | ETag/version conflict |
 | `UnsupportedStorageCapabilityException` | `AgentFrameworkException` | Effect-free failure when a storage SPI operation requires an unadvertised capability | unsupported storage operation |
 | `MiddlewareException` | `AgentExecutionException` | Middleware failure | `agent_framework.exceptions.MiddlewareException` |
+| `OpenAIProviderException` and typed subclasses | `AgentExecutionException` | Sanitized provider status/request ID/error code; credentials and response bodies are not retained | OpenAI SDK/provider errors |
+| `OpenAIUnsupportedContentException` | `ValidationException` | Explicit pre-transport content/media/role rejection | provider content error |
+| `OpenAIStreamingBufferOverflowException` | `AgentExecutionException` | Bounded stream failure with upstream cancellation | provider stream overflow |
+| `AzureOpenAIProviderException` | `AgentExecutionException` | Sanitized kind/status/request/correlation/service code; no body or credential retention | Azure OpenAI SDK/provider errors |
+| `FoundryProviderException` | `AgentExecutionException` | Sanitized kind/status/request/correlation/service code, including unsupported initial surfaces | Foundry SDK/provider errors |
 | `UserInputRequiredException` | `AgentExecutionException` | Approval/input suspension | `agent_framework.exceptions.UserInputRequiredException` |
 | `WorkflowException` | `AgentExecutionException` | Workflow root | `agent_framework.exceptions.WorkflowException` |
 | `WorkflowCheckpointException` | `WorkflowException` | Checkpoint encode/store failure; cause is retained | `agent_framework.exceptions.WorkflowCheckpointException` |
 | `WorkflowConvergenceException` | `WorkflowException` | Convergence failure | `agent_framework.exceptions.WorkflowConvergenceException` |
 | `WorkflowRunnerException` | `WorkflowException` | Runner failure | `agent_framework.exceptions.WorkflowRunnerException` |
+| `OrchestrationExecutionException` | `AgentFrameworkException` | Orchestration runtime/manager failure; finite stage cause and sync wrapper cause | orchestration workflow failure |
+| `OrchestrationStreamingBufferOverflowException` | `OrchestrationExecutionException` | Bounded orchestration event stream failure with run cancellation | orchestration stream overflow |
 
 An asynchronous method completes its stage exceptionally with the typed failure above. An unsuffixed synchronous
 facade throws `SynchronousExecutionException` and retains that typed failure as its cause; interruption also uses

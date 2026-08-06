@@ -6,6 +6,7 @@ import com.microsoft.agents.core.ChatResponseUpdate;
 import com.microsoft.agents.core.RunCancellation;
 import com.microsoft.agents.core.RunCancelledException;
 import com.microsoft.agents.core.SynchronousExecutionException;
+import com.microsoft.agents.core.internal.SingleSubscriberPublisher;
 import java.util.Objects;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
@@ -34,10 +35,17 @@ public final class FunctionInvocationRun {
 
     FunctionInvocationRun(
             RunCancellation cancellation,
+            int maxBufferedUpdates,
+            SingleSubscriberPublisher.UpdateMode updateMode,
             Function<SingleSubscriberPublisher<ChatResponseUpdate>, CompletionStage<FunctionLoopResult>> execution) {
         this.cancellation = Objects.requireNonNull(cancellation, "cancellation");
         this.execution = Objects.requireNonNull(execution, "execution");
-        this.updates = new SingleSubscriberPublisher<>(this::start, cancellation::cancel);
+        this.updates = new SingleSubscriberPublisher<>(
+                this::start,
+                cancellation::cancel,
+                maxBufferedUpdates,
+                updateMode,
+                StreamingBufferOverflowException::new);
     }
 
     /**
@@ -109,6 +117,7 @@ public final class FunctionInvocationRun {
             RunCancelledException cancelled = new RunCancelledException();
             result.completeExceptionally(cancelled);
             updates.fail(cancelled);
+            closeCancellationScope();
             return;
         }
         CompletionStage<FunctionLoopResult> stage;
@@ -117,6 +126,7 @@ public final class FunctionInvocationRun {
         } catch (RuntimeException failure) {
             result.completeExceptionally(failure);
             updates.fail(failure);
+            closeCancellationScope();
             return;
         }
         if (stage == null) {
@@ -124,6 +134,7 @@ public final class FunctionInvocationRun {
                     new ToolInvocationException("Function loop execution returned a null CompletionStage.");
             result.completeExceptionally(failure);
             updates.fail(failure);
+            closeCancellationScope();
             return;
         }
         stage.whenComplete((value, failure) -> {
@@ -131,11 +142,19 @@ public final class FunctionInvocationRun {
                 Throwable cause = unwrap(failure);
                 result.completeExceptionally(cause);
                 updates.fail(cause);
+                if (cause instanceof StreamingBufferOverflowException) {
+                    cancellation.cancel();
+                }
             } else {
-                result.complete(value);
-                updates.complete();
+                updates.complete(() -> result.complete(value));
             }
         });
+    }
+
+    private void closeCancellationScope() {
+        if (cancellation instanceof RunCancellationScope scope) {
+            scope.close();
+        }
     }
 
     private static Throwable unwrap(Throwable failure) {

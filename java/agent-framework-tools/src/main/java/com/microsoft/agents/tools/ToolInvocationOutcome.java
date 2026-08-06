@@ -10,6 +10,8 @@ public enum ToolInvocationOutcome {
     SUCCEEDED,
     /** Argument binding or function execution produced a correlated error result. */
     FAILED,
+    /** The function result did not satisfy the declared output schema. */
+    OUTPUT_VALIDATION_FAILED,
     /** Run cancellation prevented or interrupted further framework work. */
     CANCELLED,
     /** An approval decision rejected execution. */

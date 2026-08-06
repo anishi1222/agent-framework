@@ -2,15 +2,22 @@
   "schemaVersion": 1,
   "caseId": "JCF-AGENTS-003",
   "kind": "contract",
-  "description": "Agent, chat, and function middleware execute in nesting order and termination stops later work.",
+  "description": "Agent, chat, and function middleware execute once in production order with isolated contexts and guarded continuations.",
   "input": {
     "pipeline": ["agent.before", "chat.before", "function.before", "function.after", "chat.after", "agent.after"],
-    "terminationAt": "function.before"
+    "terminationAt": "agent.before"
   },
   "expected": {
-    "normalOrder": ["agent.before", "chat.before", "function.before", "function.after", "chat.after", "agent.after"],
-    "terminatedOrder": ["agent.before", "chat.before", "function.before"],
+    "normalOrder": ["agent.before", "chat.before", "chat.after", "function.before", "function.after", "chat.before", "chat.after", "agent.after"],
+    "terminatedOrder": ["agent.before"],
+    "normalModelCalls": 2,
+    "normalToolInvocations": 1,
     "modelCallsAfterTermination": 0,
-    "toolInvocationsAfterTermination": 0
+    "toolInvocationsAfterTermination": 0,
+    "contextIsolated": true,
+    "doubleNextRejected": true,
+    "doubleNextModelCalls": 2,
+    "doubleNextToolInvocations": 1,
+    "doubleNextError": "Agent middleware called next more than once."
   }
 }

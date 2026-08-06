@@ -13,5 +13,8 @@ dependencies {
         api(project(":agent-framework-orchestrations"))
         api(project(":agent-framework-observability"))
         api(project(":agent-framework-reactor-adapter"))
+        api(project(":agent-framework-openai"))
+        api(project(":agent-framework-azure-openai"))
+        api(project(":agent-framework-foundry"))
     }
 }

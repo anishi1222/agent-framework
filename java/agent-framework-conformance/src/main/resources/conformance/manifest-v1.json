@@ -50,7 +50,7 @@
       "caseId": "JCF-AGENTS-001",
       "suiteId": "JCF-AGENTS",
       "matrixStatus": "initial-scope",
-      "matrixAreas": ["Agent interface / base", "Chat client interface"],
+      "matrixAreas": ["Agent interface / base", "Chat client interface", "Streaming responses"],
       "fixture": "conformance/v1/agents/jcf-agents-001-lifecycle.json",
       "kind": "contract",
       "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests/AIAgentTests.cs", "python/packages/core/tests/core/test_agents.py"]
@@ -209,6 +209,15 @@
       "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md", "java/AGENTS.md"]
     },
     {
+      "caseId": "JCF-TOOLS-013",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-013-mixed-approval-batch.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0006-userapproval.md"]
+    },
+    {
       "caseId": "JCF-WORKFLOWS-001",
       "suiteId": "JCF-WORKFLOWS",
       "matrixStatus": "initial-scope",
@@ -221,7 +230,7 @@
       "caseId": "JCF-WORKFLOWS-002",
       "suiteId": "JCF-WORKFLOWS",
       "matrixStatus": "initial-scope",
-      "matrixAreas": ["Edges / graph"],
+      "matrixAreas": ["Edges / graph", "Workflow validation"],
       "fixture": "conformance/v1/workflows/jcf-workflows-002-fan-out-in.json",
       "kind": "workflow-trace",
       "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests/EdgeRunnerTests.cs", "python/packages/core/tests/workflow/test_workflow.py"]
@@ -257,7 +266,7 @@
       "caseId": "JCF-PROVIDERS-001",
       "suiteId": "JCF-PROVIDERS",
       "matrixStatus": "initial-scope",
-      "matrixAreas": ["OpenAI / Azure OpenAI"],
+      "matrixAreas": ["OpenAI Responses", "Azure OpenAI Responses identity and service-version modes"],
       "fixture": "conformance/v1/providers/jcf-providers-001-openai.json",
       "kind": "contract",
       "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Hosting.OpenAI.UnitTests/ConformanceTestBase.cs", "python/packages/openai/tests/openai"]

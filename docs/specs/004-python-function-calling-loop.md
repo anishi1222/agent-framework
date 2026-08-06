@@ -316,6 +316,8 @@ that manually replay messages own the equivalent rule: do not resend an approval
 
 - Every actionable local `function_call` produces exactly one terminal `function_result`, unless execution pauses
   for a new user-input request.
+- A successful terminal loop cannot leave an actionable call without a correlated terminal result. Assistant text is
+  not a substitute for a missing result.
 - Parallel calls retain model order in the returned transcript.
 - Reused `call_id` values are correlated by logical occurrence, not one global value per id.
 - A completed function call/result pair is inert on later turns.
@@ -338,7 +340,13 @@ that manually replay messages own the equivalent rule: do not resend an approval
 - A tool that requires approval does not execute before an approved response.
 - An approved tool executes exactly once.
 - A rejected tool executes zero times and produces one synthetic rejection `function_result` using the original
-  function `call_id`.
+  function `call_id` and framework `invocation_id`, with an explicit rejected outcome/status.
+- The synthetic rejection result is appended to model history and emitted to streaming observers through the same
+  result path as executed tool results.
+- Rejected invocations are owned and terminal before result emission. Duplicate call occurrences reuse that terminal
+  result and cannot execute; replayed or redundant decisions do not restore consumed approval authority.
+- Mixed approval batches produce exactly one terminal result per call in model order, including both approved and
+  rejected calls.
 - The resumed response contains the newly resolved approved and rejected terminal results before any final assistant
   message.
 - Streaming yields the same logical result content and ordering as non-streaming output and
@@ -397,10 +405,10 @@ that manually replay messages own the equivalent rule: do not resend an approval
 |---|---|---|
 | Initial approval request | Assistant response contains the original call and approval request; tool does not execute. | `test_approval_requests_in_assistant_message`, `test_streaming_approval_request_generated`, `test_streaming_approval_requests_in_assistant_message` |
 | Approved non-streaming resume | Result precedes final text; tool executes once; inputs remain unchanged. | `packages/core/tests/core/test_harness_tool_approval.py::test_approval_resume_returns_result_without_mutating_inputs[non-streaming-approved]` |
-| Rejected non-streaming resume | Rejection result precedes final text; tool executes zero times; inputs remain unchanged. | `test_approval_resume_returns_result_without_mutating_inputs[non-streaming-rejected]` |
+| Rejected non-streaming resume | One correlated rejected result is appended before any later final text; tool executes zero times; inputs remain unchanged. | `JCF-TOOLS-011`; `test_approval_resume_returns_result_without_mutating_inputs[non-streaming-rejected]` |
 | Approved streaming resume | Result update precedes final text and final response matches non-streaming shape. | `test_approval_resume_returns_result_without_mutating_inputs[streaming-approved]`, `test_streaming_approval_resume_yields_terminal_result_before_model_text[approved]` |
-| Rejected streaming resume | Rejection result update precedes final text and tool executes zero times. | `test_approval_resume_returns_result_without_mutating_inputs[streaming-rejected]`, `test_streaming_approval_resume_yields_terminal_result_before_model_text[rejected]` |
-| Mixed approved/rejected batch | Every call gets one correctly correlated terminal result. | `packages/core/tests/core/test_function_invocation_logic.py::test_rejected_approval` |
+| Rejected streaming resume | The same correlated rejected result is emitted through the result-update path before any later final text; tool executes zero times. | `JCF-TOOLS-011`; `test_approval_resume_returns_result_without_mutating_inputs[streaming-rejected]`, `test_streaming_approval_resume_yields_terminal_result_before_model_text[rejected]` |
+| Mixed approved/rejected batch | Every call gets one correctly correlated terminal result in model order; only approved bodies execute. | `JCF-TOOLS-013`; `packages/core/tests/core/test_function_invocation_logic.py::test_rejected_approval` |
 | Persisted approval replay | Resume executes with the prior call available. | `test_persisted_approval_messages_replay_correctly` |
 | Hosted approval pass-through | Hosted requests/responses are not processed as local calls. | `test_hosted_tool_approval_response`, `test_hosted_mcp_approval_response_passthrough`, `test_mixed_local_and_hosted_approval_flow` |
 | Approval-time user input | Every user-input request from one approved execution returns in order with assistant role and no extra model call; the execution consumes one call-budget unit. | `packages/core/tests/core/test_harness_tool_approval.py::test_approval_resume_returns_all_user_input_requests_without_another_model_call`, `packages/core/tests/core/test_function_invocation_logic.py::test_approval_resume_user_input_counts_toward_function_call_budget` |
@@ -428,7 +436,7 @@ that manually replay messages own the equivalent rule: do not resend an approval
 | Later stateless turn | A prior terminal approval response cannot execute again. | `test_resolved_approval_response_is_inert_on_later_stateless_turn` |
 | Pending history turn | An unresolved approval batch is omitted atomically from unrelated model input while a later decision can still resume it once. | `packages/core/tests/core/test_harness_tool_approval.py::test_pending_approval_from_file_history_stays_resumable_without_model_orphan` |
 | Duplicate function-call prevention | Approval normalization does not create a second call for one round. | `test_no_duplicate_function_calls_after_approval_processing` |
-| Rejection call id | Rejection result uses the function call id, not only the approval id. | `test_rejection_result_uses_function_call_id` |
+| Rejection correlation | Rejection result uses the original function call id and invocation id and carries an explicit rejected outcome. | `JCF-TOOLS-011`; `test_rejection_result_uses_function_call_id` |
 
 ### Mixed batches and approval middleware
 
@@ -452,7 +460,7 @@ that manually replay messages own the equivalent rule: do not resend an approval
 
 | Scenario | Required invariant | Primary regression test |
 |---|---|---|
-| Rejected execution | Rejection is a normal terminal result, not an exception to the caller. | `test_unapproved_tool_execution_raises_exception` |
+| Rejected execution | Rejection is one correlated terminal result, not an exception or uncorrelated assistant-text fallback. | `JCF-TOOLS-011`; `test_unapproved_tool_execution_raises_exception` |
 | Approved tool exception | Generic and detailed error modes preserve one result and one execution. | `test_approved_function_call_with_error_without_detailed_errors`, `test_approved_function_call_with_error_with_detailed_errors` |
 | Approved validation error | Validation failure returns one result without invoking the function body. | `test_approved_function_call_with_validation_error` |
 | Approved success | Successful approved execution returns one result. | `test_approved_function_call_successful_execution` |
@@ -481,7 +489,7 @@ that manually replay messages own the equivalent rule: do not resend an approval
 | Opaque reasoning signature replay | Provider-specific opaque reasoning metadata is captured and restored on reconstructed calls. | `packages/gemini/tests/test_gemini_client.py::test_function_call_part_captures_thought_signature_as_reasoning_content`, `test_reconstructed_function_call_replays_thought_signature_from_reasoning_content` |
 | Chat Completions approval wrappers | Framework approval wrappers are not sent as chat messages. | `packages/openai/tests/openai/test_openai_chat_completion_client.py` approval serialization tests |
 | AG-UI approval result event | Approved result emits once with content and persists in snapshot. | `packages/ag-ui/tests/ag_ui/test_approval_result_event.py::test_approval_resume_emits_tool_call_result`, `test_approval_resume_result_has_content`, `test_approval_resume_snapshot_replaces_approval_payload_with_tool_result`, `test_approval_resume_zero_updates_emits_tool_result` |
-| AG-UI rejection/mixed decision | Transport emits only the events defined for approved and rejected calls without duplicates. | `test_rejection_does_not_emit_tool_call_result`, `test_mixed_approve_reject_emits_only_approved_tool_result`, `test_resolve_approval_responses_returns_only_approved` |
+| AG-UI rejection/mixed decision | Transport preserves one correlated terminal result for every approved and rejected local call without duplicates and in model order. | `JCF-TOOLS-011`, `JCF-TOOLS-013` |
 | AG-UI approval-time follow-up | The full grouped user-input pause remains in message history and emits no synthetic `TOOL_CALL_RESULT`. | `test_resolve_approval_responses_preserves_follow_up_user_input_group` |
 | AG-UI approval execution failure | A grouped executor failure becomes one deterministic terminal error result for the approved call. | `test_resolve_approval_responses_returns_failure_when_grouped_execution_raises` |
 | AG-UI no-approval path | Ordinary tool results do not gain an extra approval result event. | `test_no_approval_no_extra_tool_result` |
@@ -531,6 +539,7 @@ Before accepting an update, reviewers must confirm:
 - the matrix names a regression test for every affected scenario;
 - approved tools cannot execute twice;
 - rejected tools cannot execute;
+- every rejected occurrence has exactly one correlated terminal result in history and streaming output;
 - no call or result becomes orphaned or duplicated;
 - call/result matching does not assume `call_id` is globally unique forever;
 - reasoning content or opaque signatures remain in the same logical group as the paired call/result, or replay fails

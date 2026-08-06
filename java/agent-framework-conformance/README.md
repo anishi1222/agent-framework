@@ -9,6 +9,9 @@ constraint.
 - `src/main/resources/conformance/manifest-v1.json` registers every case exactly once.
 - Concrete fixtures live under `conformance/v1/<area>/` and carry `schemaVersion`, `caseId`,
   `kind`, and non-empty `expected` data.
+- Successful tool-loop fixtures require one correlated terminal `functionResult` for every actionable
+  call. Rejected approvals use an explicit `rejected` result outcome and never count as tool-body
+  invocations.
 - Stable suite prefixes use `JCF-<AREA>` and concrete cases add a three-digit suffix, such as
   `JCF-TOOLS-007`.
 - `ConformanceFixtureLoader` uses explicit kind dispatch and rejects duplicate keys, unknown fields,
@@ -32,6 +35,11 @@ constraint.
   `SerializationRejectionAssertions.assertConforms` requires a valid session and valid checkpoint
   positive control to be accepted, then requires every malformed case to be rejected with its
   declared `SerializationRejectionReason`.
+- Production module bindings currently cover `JCF-CORE-001` through `JCF-CORE-005`,
+  `JCF-TOOLS-001` through `JCF-TOOLS-013`, `JCF-AGENTS-001` through `JCF-AGENTS-003`, and
+  `JCF-SESSIONS-001` through `JCF-SESSIONS-003`, and `JCF-WORKFLOWS-001` through
+  `JCF-WORKFLOWS-005`. Session and checkpoint create-only operations use expected revision `-1`;
+  positive revisions are opaque compare-and-set versions.
 
 To add a case, add the fixture and manifest entry, then put the exact case ID on its
 `initial-scope` matrix row when applicable. `ConformanceManifestCoverageTest` fails for unregistered

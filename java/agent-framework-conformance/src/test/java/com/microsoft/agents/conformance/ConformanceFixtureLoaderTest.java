@@ -46,8 +46,8 @@ class ConformanceFixtureLoaderTest {
         List<ConformanceFixture> workflowCases = catalog.byKind(FixtureKind.WORKFLOW_TRACE);
 
         // Assert
-        assertThat(catalog.cases()).hasSize(31);
-        assertThat(toolCases).hasSize(12);
+        assertThat(catalog.cases()).hasSize(32);
+        assertThat(toolCases).hasSize(13);
         assertThat(workflowCases).hasSize(4);
         assertThat(catalog.byKind(FixtureKind.WORKFLOW_CHECKPOINT)).hasSize(1);
         assertThat(catalog.requireCase("JCF-SESSIONS-001")).isInstanceOf(SnapshotFixture.class);

@@ -291,7 +291,8 @@ final class FixtureSchemaV1 {
                 "previousCheckpointId",
                 "status",
                 "bufferedInputs",
-                "pendingExecutors");
+                "pendingExecutors",
+                "fanInNextEpochs");
         JsonSchemaV1.requireText(payload, "workflowId", payloadSource);
         String checkpointId = JsonSchemaV1.requireText(payload, "checkpointId", payloadSource);
         int revision = JsonSchemaV1.requirePositiveInteger(payload, "revision", payloadSource);
@@ -303,11 +304,20 @@ final class FixtureSchemaV1 {
         JsonSchemaV1.requireText(payload, "status", payloadSource);
         List<String> pendingExecutors =
                 JsonSchemaV1.requireTextArray(payload, "pendingExecutors", payloadSource, true, true);
+        JsonNode fanInNextEpochs = JsonSchemaV1.requireObject(payload, "fanInNextEpochs", payloadSource);
+        fanInNextEpochs.properties().forEach(entry -> {
+            if (entry.getKey().isBlank()) {
+                throw JsonSchemaV1.invalid(
+                        JsonSchemaV1.path(payloadSource, "fanInNextEpochs") + " keys must be non-blank target ids.");
+            }
+            JsonSchemaV1.requireNonNegativeInteger(
+                    fanInNextEpochs, entry.getKey(), JsonSchemaV1.path(payloadSource, "fanInNextEpochs"));
+        });
 
         JsonNode bufferedInputs = JsonSchemaV1.requireArray(payload, "bufferedInputs", payloadSource, true);
         LinkedHashMap<String, List<String>> bufferedSources = new LinkedHashMap<>();
         Map<String, ArrayList<String>> mutableSources = new LinkedHashMap<>();
-        Set<String> bufferIds = new HashSet<>();
+        Set<List<String>> bufferIds = new HashSet<>();
         for (int index = 0; index < bufferedInputs.size(); index++) {
             JsonNode buffered = bufferedInputs.get(index);
             String bufferedSource = JsonSchemaV1.indexed(JsonSchemaV1.path(payloadSource, "bufferedInputs"), index);
@@ -315,7 +325,7 @@ final class FixtureSchemaV1 {
             String sourceId = JsonSchemaV1.requireText(buffered, "sourceId", bufferedSource);
             String targetId = JsonSchemaV1.requireText(buffered, "targetId", bufferedSource);
             JsonSchemaV1.require(buffered, "value", bufferedSource);
-            if (!bufferIds.add(targetId + "\u0000" + sourceId)) {
+            if (!bufferIds.add(List.of(targetId, sourceId))) {
                 throw JsonSchemaV1.invalid(bufferedSource + " duplicates a buffered source/target identity.");
             }
             mutableSources
@@ -353,6 +363,7 @@ final class FixtureSchemaV1 {
                 "decodedPendingExecutors",
                 "decodedBufferedInputOrder",
                 "resumeFanInValues",
+                "resumeFanInEpoch",
                 "terminalOutcome",
                 "deterministicEncoding",
                 "roundTripWithinJavaV1",
@@ -365,12 +376,17 @@ final class FixtureSchemaV1 {
         JsonSchemaV1.requireTextArray(expected, "decodedPendingExecutors", expectedSource, true, true);
         JsonSchemaV1.requireTextArray(expected, "decodedBufferedInputOrder", expectedSource, true, true);
         JsonSchemaV1.requireArray(expected, "resumeFanInValues", expectedSource, true);
+        int expectedResumeEpoch = JsonSchemaV1.requireNonNegativeInteger(expected, "resumeFanInEpoch", expectedSource);
         JsonSchemaV1.requireText(expected, "terminalOutcome", expectedSource);
         requireTrue(expected, "deterministicEncoding", expectedSource);
         requireTrue(expected, "roundTripWithinJavaV1", expectedSource);
         requireTrue(expected, "wrongDocumentKindRejected", expectedSource);
         requireTrue(expected, "unsupportedPayloadVersionRejected", expectedSource);
         requireExpectedJson(expected, "resumeFanInValues", nodes(resumeSummary.fanInValues()), expectedSource);
+        if (resumeSummary.fanInEpochs().isEmpty() || resumeSummary.fanInEpochs().getLast() != expectedResumeEpoch) {
+            throw JsonSchemaV1.invalid(JsonSchemaV1.path(expectedSource, "resumeFanInEpoch")
+                    + " must match the final resumed fan-in epoch.");
+        }
         requireExpectedText(expected, "terminalOutcome", resumeSummary.terminalOutcome(), expectedSource);
         ArrayList<String> canonicalPendingExecutors = new ArrayList<>(pendingExecutors);
         canonicalPendingExecutors.sort(String::compareTo);
@@ -612,7 +628,11 @@ final class FixtureSchemaV1 {
                         sourceName,
                         List.of("operation", "expectedRevision"),
                         List.of("outcome", "returnedRevision", "value"));
-                JsonSchemaV1.requireNonNegativeInteger(operation, "expectedRevision", sourceName);
+                int expectedRevision = JsonSchemaV1.requireInteger(operation, "expectedRevision", sourceName);
+                if (expectedRevision != -1 && expectedRevision <= 0) {
+                    throw JsonSchemaV1.invalid(JsonSchemaV1.path(sourceName, "expectedRevision")
+                            + " must be -1 for create or a positive opaque revision.");
+                }
                 optionalText(operation, "outcome", sourceName);
                 if (operation.has("returnedRevision")) {
                     JsonSchemaV1.requirePositiveInteger(operation, "returnedRevision", sourceName);
@@ -767,10 +787,16 @@ final class FixtureSchemaV1 {
                         "toolExecuted",
                         "functionResultCount",
                         "invocationCount",
+                        "resultCallId",
+                        "resultInvocationId",
+                        "resultOutcome",
                         "terminalCount");
                 requireTrue(expected, "rejectionAccepted", sourceName);
                 requireFalse(expected, "toolExecuted", sourceName);
                 requireCountFields(expected, sourceName, "functionResultCount", "invocationCount", "terminalCount");
+                JsonSchemaV1.requireText(expected, "resultCallId", sourceName);
+                JsonSchemaV1.requireText(expected, "resultInvocationId", sourceName);
+                JsonSchemaV1.requireText(expected, "resultOutcome", sourceName);
             }
             case "JCF-TOOLS-012" -> {
                 JsonSchemaV1.exactObject(
@@ -787,6 +813,30 @@ final class FixtureSchemaV1 {
                 JsonSchemaV1.requireText(expected, "sharedInvocationId", sourceName);
                 requireCountFields(
                         expected, sourceName, "totalInvocationCount", "functionResultCount", "terminalCount");
+            }
+            case "JCF-TOOLS-013" -> {
+                JsonSchemaV1.exactObject(
+                        expected,
+                        sourceName,
+                        "approvedCallId",
+                        "approvedInvocationCount",
+                        "rejectedCallId",
+                        "rejectedInvocationCount",
+                        "functionResultCount",
+                        "resultOrder",
+                        "resultOutcomes",
+                        "terminalCount");
+                JsonSchemaV1.requireText(expected, "approvedCallId", sourceName);
+                JsonSchemaV1.requireText(expected, "rejectedCallId", sourceName);
+                requireCountFields(
+                        expected,
+                        sourceName,
+                        "approvedInvocationCount",
+                        "rejectedInvocationCount",
+                        "functionResultCount",
+                        "terminalCount");
+                JsonSchemaV1.requireTextArray(expected, "resultOrder", sourceName, true, true);
+                JsonSchemaV1.requireTextArray(expected, "resultOutcomes", sourceName, true, true);
             }
             default ->
                 throw JsonSchemaV1.invalid(
@@ -1015,6 +1065,12 @@ final class FixtureSchemaV1 {
                 requireExpectedBoolean(expected, "toolExecuted", lane.totalInvocationCount() > 0, sourceName);
                 requireExpectedCount(expected, "functionResultCount", lane.functionResultCount(), sourceName);
                 requireExpectedCount(expected, "invocationCount", lane.totalInvocationCount(), sourceName);
+                String resultCallId = only(lane.resultOrder(), "rejection result call");
+                requireExpectedText(expected, "resultCallId", resultCallId, sourceName);
+                requireExpectedText(
+                        expected, "resultInvocationId", lane.invocationIds().get(resultCallId), sourceName);
+                requireExpectedText(
+                        expected, "resultOutcome", lane.resultOutcomes().get(resultCallId), sourceName);
                 requireExpectedCount(expected, "terminalCount", lane.terminalCount(), sourceName);
             }
             case "JCF-TOOLS-012" -> {
@@ -1030,6 +1086,42 @@ final class FixtureSchemaV1 {
                         expected, "sharedInvocationId", lane.invocationIds().get(callId), sourceName);
                 requireExpectedCount(expected, "totalInvocationCount", lane.totalInvocationCount(), sourceName);
                 requireExpectedCount(expected, "functionResultCount", lane.functionResultCount(), sourceName);
+                requireExpectedCount(expected, "terminalCount", lane.terminalCount(), sourceName);
+            }
+            case "JCF-TOOLS-013" -> {
+                String approvedCallId = only(
+                        lane.resultOrder().stream()
+                                .filter(callId ->
+                                        !"rejected".equals(lane.resultOutcomes().get(callId)))
+                                .toList(),
+                        "approved result call");
+                String rejectedCallId = only(
+                        lane.resultOrder().stream()
+                                .filter(callId ->
+                                        "rejected".equals(lane.resultOutcomes().get(callId)))
+                                .toList(),
+                        "rejected result call");
+                requireExpectedText(expected, "approvedCallId", approvedCallId, sourceName);
+                requireExpectedText(expected, "rejectedCallId", rejectedCallId, sourceName);
+                requireExpectedCount(
+                        expected,
+                        "approvedInvocationCount",
+                        lane.invocationCounts().getOrDefault(approvedCallId, 0),
+                        sourceName);
+                requireExpectedCount(
+                        expected,
+                        "rejectedInvocationCount",
+                        lane.invocationCounts().getOrDefault(rejectedCallId, 0),
+                        sourceName);
+                requireExpectedCount(expected, "functionResultCount", lane.functionResultCount(), sourceName);
+                requireExpectedJson(expected, "resultOrder", strings(lane.resultOrder()), sourceName);
+                requireExpectedJson(
+                        expected,
+                        "resultOutcomes",
+                        strings(lane.resultOrder().stream()
+                                .map(lane.resultOutcomes()::get)
+                                .toList()),
+                        sourceName);
                 requireExpectedCount(expected, "terminalCount", lane.terminalCount(), sourceName);
             }
             default -> {
@@ -1366,11 +1458,28 @@ final class FixtureSchemaV1 {
                 expectedSource,
                 "normalOrder",
                 "terminatedOrder",
+                "normalModelCalls",
+                "normalToolInvocations",
                 "modelCallsAfterTermination",
-                "toolInvocationsAfterTermination");
-        JsonSchemaV1.requireTextArray(expected, "normalOrder", expectedSource, true, true);
+                "toolInvocationsAfterTermination",
+                "contextIsolated",
+                "doubleNextRejected",
+                "doubleNextModelCalls",
+                "doubleNextToolInvocations",
+                "doubleNextError");
+        JsonSchemaV1.requireTextArray(expected, "normalOrder", expectedSource, true, false);
         JsonSchemaV1.requireTextArray(expected, "terminatedOrder", expectedSource, true, true);
-        requireCountFields(expected, expectedSource, "modelCallsAfterTermination", "toolInvocationsAfterTermination");
+        requireCountFields(
+                expected,
+                expectedSource,
+                "normalModelCalls",
+                "normalToolInvocations",
+                "modelCallsAfterTermination",
+                "toolInvocationsAfterTermination",
+                "doubleNextModelCalls",
+                "doubleNextToolInvocations");
+        requireBooleanFields(expected, expectedSource, "contextIsolated", "doubleNextRejected");
+        JsonSchemaV1.requireText(expected, "doubleNextError", expectedSource);
     }
 
     private static void validateToolCapabilitiesContract(

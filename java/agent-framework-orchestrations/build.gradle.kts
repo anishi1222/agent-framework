@@ -5,5 +5,5 @@ plugins {
 description = "Higher-level sequential, concurrent, handoff, group-chat, and Magentic orchestrations."
 
 dependencies {
-    api(project(":agent-framework-workflows"))
+    api(project(":agent-framework-agents"))
 }

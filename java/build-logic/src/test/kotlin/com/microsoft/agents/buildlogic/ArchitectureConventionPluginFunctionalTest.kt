@@ -70,6 +70,68 @@ class ArchitectureConventionPluginFunctionalTest {
     }
 
     @Test
+    fun `orchestrations may depend directly on agents`() {
+        writeSettings("agent-framework-agents", "agent-framework-orchestrations")
+        writeRootBuild()
+        writeJavaLibrary("agent-framework-agents")
+        writeFile(
+            "agent-framework-orchestrations/build.gradle",
+            """
+            plugins {
+                id 'java-library'
+            }
+
+            tasks.withType(JavaCompile).configureEach {
+                options.release = 25
+            }
+
+            dependencies {
+                api project(':agent-framework-agents')
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("checkArchitecture").build()
+
+        assertThat(result.task(":checkArchitecture")?.outcome).isEqualTo(TaskOutcome.SUCCESS)
+    }
+
+    @Test
+    fun `orchestrations may not depend on workflows without an explicit policy change`() {
+        writeSettings(
+            "agent-framework-agents",
+            "agent-framework-workflows",
+            "agent-framework-orchestrations",
+        )
+        writeRootBuild()
+        writeJavaLibrary("agent-framework-agents")
+        writeJavaLibrary("agent-framework-workflows")
+        writeFile(
+            "agent-framework-orchestrations/build.gradle",
+            """
+            plugins {
+                id 'java-library'
+            }
+
+            tasks.withType(JavaCompile).configureEach {
+                options.release = 25
+            }
+
+            dependencies {
+                api project(':agent-framework-workflows')
+            }
+            """.trimIndent(),
+        )
+
+        val result = runner("checkArchitecture").buildAndFail()
+
+        assertThat(result.output)
+            .contains("agent-framework-orchestrations has invalid project dependencies")
+            .contains("agent-framework-workflows")
+            .contains("allowed: [agent-framework-agents]")
+    }
+
+    @Test
     fun `internal Jackson implementation reference is allowed`() {
         writeJacksonFixture()
         writeSettings("agent-framework-core", repository = "repository")
@@ -527,6 +589,21 @@ class ArchitectureConventionPluginFunctionalTest {
             }
 
             $publicationConfiguration
+            """.trimIndent(),
+        )
+    }
+
+    private fun writeJavaLibrary(module: String) {
+        writeFile(
+            "$module/build.gradle",
+            """
+            plugins {
+                id 'java-library'
+            }
+
+            tasks.withType(JavaCompile).configureEach {
+                options.release = 25
+            }
             """.trimIndent(),
         )
     }

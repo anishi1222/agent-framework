@@ -59,3 +59,5 @@ jobs:
         run: |
           test -f build/test-maven-repository/com/microsoft/agents/agent-framework-bom/0.1.0-SNAPSHOT/maven-metadata.xml
           test -f build/test-maven-repository/com/microsoft/agents/agent-framework-core/0.1.0-SNAPSHOT/maven-metadata.xml
+          test -f build/test-maven-repository/com/microsoft/agents/agent-framework-azure-openai/0.1.0-SNAPSHOT/maven-metadata.xml
+          test -f build/test-maven-repository/com/microsoft/agents/agent-framework-foundry/0.1.0-SNAPSHOT/maven-metadata.xml

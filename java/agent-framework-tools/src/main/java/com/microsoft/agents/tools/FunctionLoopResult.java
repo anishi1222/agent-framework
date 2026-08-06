@@ -2,7 +2,9 @@
 
 package com.microsoft.agents.tools;
 
+import com.microsoft.agents.core.ChatResponse;
 import com.microsoft.agents.core.Message;
+import com.microsoft.agents.core.UsageDetails;
 import java.util.List;
 import java.util.Objects;
 
@@ -24,6 +26,10 @@ public final class FunctionLoopResult {
 
     private final int toolInvocations;
 
+    private final ChatResponse latestResponse;
+
+    private final UsageDetails usage;
+
     final FunctionInvocationLoop.LogicalRunState state;
 
     final long suspensionVersion;
@@ -36,6 +42,8 @@ public final class FunctionLoopResult {
             List<ToolApprovalDecisionRejection> rejectedDecisions,
             int modelTurns,
             int toolInvocations,
+            ChatResponse latestResponse,
+            UsageDetails usage,
             FunctionInvocationLoop.LogicalRunState state,
             long suspensionVersion) {
         this.outcome = Objects.requireNonNull(outcome, "outcome");
@@ -45,6 +53,8 @@ public final class FunctionLoopResult {
         this.rejectedDecisions = List.copyOf(rejectedDecisions);
         this.modelTurns = modelTurns;
         this.toolInvocations = toolInvocations;
+        this.latestResponse = latestResponse;
+        this.usage = usage;
         this.state = Objects.requireNonNull(state, "state");
         this.suspensionVersion = suspensionVersion;
     }
@@ -110,6 +120,37 @@ public final class FunctionLoopResult {
      */
     public int toolInvocations() {
         return toolInvocations;
+    }
+
+    /**
+     * Returns the latest provider response recorded by the loop.
+     *
+     * @return latest provider response, or {@code null} before any provider turn
+     */
+    public ChatResponse latestResponse() {
+        return latestResponse;
+    }
+
+    /**
+     * Returns usage folded in provider-turn order across this logical run.
+     *
+     * @return folded usage, or {@code null} when no provider turn reported usage
+     */
+    public UsageDetails usage() {
+        return usage;
+    }
+
+    /**
+     * Returns safe state for restoring an input-required phase.
+     *
+     * @return detached continuation snapshot
+     * @throws ToolInvocationException when this result is terminal
+     */
+    public FunctionContinuation continuation() {
+        if (outcome != FunctionLoopOutcome.INPUT_REQUIRED) {
+            throw new ToolInvocationException("Only an input-required result has continuation state.");
+        }
+        return state.continuation();
     }
 
     /**

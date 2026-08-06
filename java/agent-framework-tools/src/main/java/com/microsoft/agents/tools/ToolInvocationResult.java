@@ -23,7 +23,8 @@ public record ToolInvocationResult(
         Objects.requireNonNull(outcome, "outcome");
         Objects.requireNonNull(value, "value");
         error = ToolValidation.optionalNonBlank(error, "error");
-        if (outcome == ToolInvocationOutcome.FAILED && error == null) {
+        if ((outcome == ToolInvocationOutcome.FAILED || outcome == ToolInvocationOutcome.OUTPUT_VALIDATION_FAILED)
+                && error == null) {
             throw new IllegalArgumentException("A failed invocation result requires an error.");
         }
     }
@@ -51,5 +52,30 @@ public record ToolInvocationResult(
     public static ToolInvocationResult failed(InvocationId invocationId, String callId, String error) {
         return new ToolInvocationResult(
                 invocationId, callId, ToolInvocationOutcome.FAILED, StateValue.string(error), error);
+    }
+
+    /**
+     * Creates a sanitized output-validation failure.
+     *
+     * @param invocationId invocation identifier
+     * @param callId call identifier
+     * @param error sanitized error
+     * @return output-validation failure
+     */
+    public static ToolInvocationResult outputValidationFailed(InvocationId invocationId, String callId, String error) {
+        return new ToolInvocationResult(
+                invocationId, callId, ToolInvocationOutcome.OUTPUT_VALIDATION_FAILED, StateValue.string(error), error);
+    }
+
+    /**
+     * Creates a synthetic result for an approval-rejected invocation.
+     *
+     * @param invocationId invocation identifier
+     * @param callId call identifier
+     * @param value sanitized rejection result
+     * @return rejected result
+     */
+    public static ToolInvocationResult rejected(InvocationId invocationId, String callId, StateValue value) {
+        return new ToolInvocationResult(invocationId, callId, ToolInvocationOutcome.REJECTED, value, null);
     }
 }

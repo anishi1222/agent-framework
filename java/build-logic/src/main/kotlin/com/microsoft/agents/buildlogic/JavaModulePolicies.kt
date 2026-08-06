@@ -35,18 +35,33 @@ internal object JavaModulePolicies {
                 ),
             "agent-framework-orchestrations" to
                 JavaModulePolicy(
-                    setOf("agent-framework-workflows"),
+                    setOf("agent-framework-agents"),
                     "com.microsoft.agents.orchestrations",
                 ),
             "agent-framework-observability" to
                 JavaModulePolicy(
-                    setOf("agent-framework-agents"),
+                    setOf("agent-framework-agents", "agent-framework-workflows"),
                     "com.microsoft.agents.observability",
                 ),
             "agent-framework-reactor-adapter" to
                 JavaModulePolicy(
                     setOf("agent-framework-agents"),
                     "com.microsoft.agents.adapters.reactor",
+                ),
+            "agent-framework-openai" to
+                JavaModulePolicy(
+                    setOf("agent-framework-agents"),
+                    "com.microsoft.agents.providers.openai",
+                ),
+            "agent-framework-azure-openai" to
+                JavaModulePolicy(
+                    setOf("agent-framework-agents", "agent-framework-openai"),
+                    "com.microsoft.agents.providers.azureopenai",
+                ),
+            "agent-framework-foundry" to
+                JavaModulePolicy(
+                    setOf("agent-framework-agents", "agent-framework-openai"),
+                    "com.microsoft.agents.providers.foundry",
                 ),
             TEST_SUPPORT_MODULE to
                 JavaModulePolicy(

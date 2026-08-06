@@ -86,6 +86,38 @@ class ToolInvocationLedgerTest {
     }
 
     @Test
+    void rejectedApproval_shouldRecordOwnedTerminalOutcomeWithoutExecutingBody() {
+        // Arrange
+        AtomicInteger bodies = new AtomicInteger();
+        InMemoryLedger ledger = new InMemoryLedger();
+        FunctionTool tool = tool(bodies, ToolApprovalMode.ALWAYS_REQUIRE);
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource().enqueue(response(call("call-ledger-rejected")));
+
+        // Act
+        FunctionLoopResult result;
+        try (ExecutorService executor = Executors.newSingleThreadExecutor();
+                FunctionInvocationLoop loop = new FunctionInvocationLoop(
+                        source, List.of(tool), executor, InvocationIdFactory.defaultFactory(), ledger)) {
+            FunctionLoopResult suspended = loop.run(
+                    new FunctionInvocationRequest("run-ledger-rejected", List.of(Message.text(Role.USER, "write"))));
+            result = loop.resume(
+                            suspended,
+                            List.of(ToolApprovalDecision.reject(
+                                    suspended.approvalRequests().getFirst(), "declined")))
+                    .result();
+        }
+
+        // Assert
+        assertThat(bodies).hasValue(0);
+        assertThat(result.toolInvocations()).isZero();
+        assertThat(ledger.pendingWrites).hasValue(1);
+        assertThat(ledger.outcomeWrites).hasValue(1);
+        assertThat(ledger.entry.snapshot()).isInstanceOfSatisfying(InvocationOutcome.class, outcome -> assertThat(
+                        outcome.result().outcome())
+                .isEqualTo(ToolInvocationOutcome.REJECTED));
+    }
+
+    @Test
     void durablePendingRecord_shouldFailClosedWithoutClaimingCrashReplayExactlyOnce() {
         // Arrange
         AtomicInteger bodies = new AtomicInteger();
@@ -143,12 +175,16 @@ class ToolInvocationLedgerTest {
     }
 
     private static FunctionTool tool(AtomicInteger bodies) {
+        return tool(bodies, ToolApprovalMode.NEVER_REQUIRE);
+    }
+
+    private static FunctionTool tool(AtomicInteger bodies, ToolApprovalMode approvalMode) {
         return FunctionTool.create(
                 new ToolMetadata(
                         "write",
                         "Writes.",
                         Set.of(ToolCapability.FUNCTION),
-                        ToolApprovalMode.NEVER_REQUIRE,
+                        approvalMode,
                         StateValue.object(Map.of("type", StateValue.string("object"))),
                         StateValue.object(Map.of("type", StateValue.string("string")))),
                 (context, arguments) -> {
