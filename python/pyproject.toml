@@ -63,6 +63,7 @@ constraint-dependencies = [
     "cryptography>=50.0.0",
     "fastapi-sso>=0.19.0",
     "h2>=4.4.1",
+    # Stable LiteLLM proxy releases cap cryptography below 50; keep this until a stable compatible release exists.
     "litellm>=1.97.0.dev1",
 ]
 # python-multipart>=0.0.31 overrides litellm[proxy]'s exact pin of <=0.0.27 for security.
