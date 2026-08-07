@@ -71,7 +71,7 @@ class FileBasedAttachmentStore(AttachmentStore[dict[str, Any]]):
         Raises:
             ValueError: If the attachment ID does not resolve to a direct child of the uploads directory.
         """
-        if attachment_id in {".", ".."} or not _SAFE_ATTACHMENT_ID.fullmatch(attachment_id):
+        if not attachment_id or attachment_id in {".", ".."} or not _SAFE_ATTACHMENT_ID.fullmatch(attachment_id):
             raise ValueError(f"Invalid attachment ID: {attachment_id!r}")
 
         file_path = (self.uploads_dir / attachment_id).resolve()
