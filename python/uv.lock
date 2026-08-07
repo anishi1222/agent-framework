@@ -68,7 +68,7 @@ constraints = [
     { name = "cryptography", specifier = ">=50.0.0" },
     { name = "fastapi-sso", specifier = ">=0.19.0" },
     { name = "h2", specifier = ">=4.4.1" },
-    { name = "litellm", specifier = ">=1.83.7" },
+    { name = "litellm", specifier = ">=1.97.0.dev1" },
 ]
 overrides = [
     { name = "mcp", extras = ["ws"], specifier = ">=1.27.0" },
