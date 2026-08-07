@@ -11,6 +11,9 @@ on:
       - "!python/.github/skills/*"
       - "!python/.github/skills/**"
 
+permissions:
+  contents: read
+
 env:
   # Configure a constant location for the uv cache
   UV_CACHE_DIR: /tmp/.uv-cache
