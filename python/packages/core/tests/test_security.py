@@ -355,6 +355,23 @@ class TestLabelTrackingMiddleware:
         # Should default to UNTRUSTED (safe default)
         assert label.integrity == IntegrityLabel.UNTRUSTED
 
+    def test_invalid_confidentiality_label_value_is_not_logged(
+        self,
+        middleware,
+        mock_function,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Invalid confidentiality metadata should not be disclosed in logs."""
+        invalid_label = "sensitive-invalid-label"
+        mock_function.additional_properties = {"confidentiality": invalid_label}
+        context = FunctionInvocationContext(function=mock_function, arguments=mock_function.args_schema(arg="test"))
+
+        with caplog.at_level("WARNING", logger="agent_framework.security"):
+            label = middleware._get_function_confidentiality(context)
+
+        assert label == ConfidentialityLabel.PUBLIC
+        assert invalid_label not in caplog.text
+
     @pytest.mark.asyncio
     async def test_input_labels_propagate_to_output(self, middleware):
         """Test that source_integrity overrides input labels (tier 2 > tier 3).
@@ -614,6 +631,23 @@ class TestPolicyEnforcementMiddleware:
         """Test that violations are recorded in audit log."""
         initial_count = len(middleware.get_audit_log())
         assert initial_count == 0
+
+    def test_invalid_max_confidentiality_value_is_not_logged(
+        self,
+        middleware,
+        mock_function,
+        caplog: pytest.LogCaptureFixture,
+    ) -> None:
+        """Invalid maximum confidentiality metadata should not be disclosed in logs."""
+        invalid_label = "sensitive-invalid-label"
+        mock_function.additional_properties = {"max_allowed_confidentiality": invalid_label}
+        context = FunctionInvocationContext(function=mock_function, arguments=mock_function.args_schema(arg="test"))
+
+        with caplog.at_level("WARNING", logger="agent_framework.security"):
+            passed = middleware._check_confidentiality_policy(context, ContentLabel())
+
+        assert passed
+        assert invalid_label not in caplog.text
 
     async def test_untrusted_call_requests_policy_approval(self, mock_function):
         """Test that policy violations can become approval requests."""

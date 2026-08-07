@@ -7,6 +7,7 @@ uploaded files on the local filesystem. In production, you should use
 cloud storage like S3, Azure Blob Storage, or Google Cloud Storage.
 """
 
+import os.path
 import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any

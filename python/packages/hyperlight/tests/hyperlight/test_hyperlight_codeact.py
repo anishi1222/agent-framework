@@ -1129,9 +1129,10 @@ def test_execute_code_tool_description_contains_call_tool_guidance(tmp_path: Pat
     assert "compute" in description
     assert "/input/data/data.json" in description
     assert "/output" in description
-    assert "api.example.com" in description
-    assert "GET, POST" in description
-    assert "github.com" in description
+    assert {
+        "- `api.example.com`: GET, POST.",
+        "- `github.com`: all methods allowed by the backend.",
+    }.issubset(description.splitlines())
 
 
 async def test_execute_code_tool_executes_with_structured_content(monkeypatch: pytest.MonkeyPatch) -> None:

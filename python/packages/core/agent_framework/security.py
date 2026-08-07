@@ -1378,10 +1378,7 @@ class LabelTrackingFunctionMiddleware(FunctionMiddleware):
             try:
                 return ConfidentialityLabel(confidentiality_str)
             except ValueError:
-                logger.warning(
-                    f"Invalid confidentiality label for function '{context.function.name}', "
-                    "using default"
-                )
+                logger.warning(f"Invalid confidentiality label for function '{context.function.name}', using default")
 
         return self.default_confidentiality
 
@@ -2156,7 +2153,9 @@ class PolicyEnforcementFunctionMiddleware(FunctionMiddleware):
                         ),
                     }
             except ValueError:
-                logger.warning(f"Invalid max_allowed_confidentiality: {max_allowed_conf}")
+                logger.warning(
+                    f"Invalid maximum confidentiality label for function '{context.function.name}', ignoring constraint"
+                )
 
         return {"passed": True, "failure_type": None, "reason": None}
 

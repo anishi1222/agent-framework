@@ -18,9 +18,6 @@ env:
   # Configure a constant location for the uv cache
   UV_CACHE_DIR: /tmp/.uv-cache
 
-permissions:
-  contents: read
-
 jobs:
   pre-commit-hooks:
     name: Pre-commit Hooks
