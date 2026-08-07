@@ -254,8 +254,13 @@ internal static class AgentMcpSkillArchiveExtractor
             return null;
         }
 
+        // The containment check is inlined here, rather than delegated, so that the zip-slip guard is
+        // applied directly where the destination path is produced.
         string destination = Path.GetFullPath(Path.Combine(fullTarget, normalized));
-        if (!IsPathContainedIn(fullTarget, destination))
+        string fullTargetPrefix = Path.GetFullPath(fullTarget + Path.DirectorySeparatorChar);
+        if (!destination.StartsWith(
+                fullTargetPrefix,
+                OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal))
         {
             return null;
         }
