@@ -7,6 +7,7 @@ uploaded files on the local filesystem. In production, you should use
 cloud storage like S3, Azure Blob Storage, or Google Cloud Storage.
 """
 
+import os.path
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -70,10 +71,12 @@ class FileBasedAttachmentStore(AttachmentStore[dict[str, Any]]):
         if not attachment_id or attachment_id in {".", ".."} or "/" in attachment_id or "\\" in attachment_id:
             raise ValueError(f"Invalid attachment ID: {attachment_id!r}")
 
-        file_path = (self.uploads_dir / attachment_id).resolve()
-        if not file_path.is_relative_to(self.uploads_dir) or file_path.parent != self.uploads_dir:
+        uploads_dir_str = os.path.realpath(str(self.uploads_dir))
+        full_path = os.path.realpath(os.path.join(uploads_dir_str, attachment_id))
+        uploads_dir_prefix = os.path.join(uploads_dir_str, "")
+        if not full_path.startswith(uploads_dir_prefix) or os.path.dirname(full_path) != uploads_dir_str:
             raise ValueError(f"Invalid attachment ID: {attachment_id!r}")
-        return file_path
+        return Path(full_path)
 
     async def delete_attachment(self, attachment_id: str, context: dict[str, Any]) -> None:
         """Delete an attachment and its file from disk."""
