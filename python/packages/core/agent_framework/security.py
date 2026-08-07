@@ -1379,8 +1379,8 @@ class LabelTrackingFunctionMiddleware(FunctionMiddleware):
                 return ConfidentialityLabel(confidentiality_str)
             except ValueError:
                 logger.warning(
-                    f"Invalid confidentiality label '{confidentiality_str}' "
-                    f"for function '{context.function.name}', using default"
+                    f"Invalid confidentiality label for function '{context.function.name}', "
+                    "using default"
                 )
 
         return self.default_confidentiality
