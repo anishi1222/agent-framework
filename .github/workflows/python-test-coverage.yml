@@ -9,6 +9,10 @@ on:
       - "python/scripts/workspace_poe_tasks.py"
       - ".github/scripts/python_check_coverage.py"
       - ".github/workflows/python-test-coverage.yml"
+
+permissions:
+  contents: read
+
 env:
   # Configure a constant location for the uv cache
   UV_CACHE_DIR: /tmp/.uv-cache

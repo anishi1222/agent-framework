@@ -7,7 +7,7 @@ uploaded files on the local filesystem. In production, you should use
 cloud storage like S3, Azure Blob Storage, or Google Cloud Storage.
 """
 
-import os.path
+import re
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -17,6 +17,9 @@ from pydantic import AnyUrl
 
 if TYPE_CHECKING:
     from store import SQLiteStore
+
+# Attachment IDs are generated identifiers; restrict them to a safe filename charset.
+_SAFE_ATTACHMENT_ID = re.compile(r"[A-Za-z0-9._-]{1,255}")
 
 
 class FileBasedAttachmentStore(AttachmentStore[dict[str, Any]]):
@@ -68,7 +71,7 @@ class FileBasedAttachmentStore(AttachmentStore[dict[str, Any]]):
         Raises:
             ValueError: If the attachment ID does not resolve to a direct child of the uploads directory.
         """
-        if not attachment_id or attachment_id in {".", ".."} or "/" in attachment_id or "\\" in attachment_id:
+        if not attachment_id or attachment_id in {".", ".."} or not _SAFE_ATTACHMENT_ID.fullmatch(attachment_id):
             raise ValueError(f"Invalid attachment ID: {attachment_id!r}")
 
         uploads_dir_str = os.path.realpath(str(self.uploads_dir))
