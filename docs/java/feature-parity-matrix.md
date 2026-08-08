@@ -3,9 +3,9 @@
 **Task ID:** `java-parity-baseline`
 **Status:** Core model, tools, agents, sessions, context/history providers, context compaction,
 middleware, approval continuation, workflows, optional OpenTelemetry observability, OpenAI
-Responses, Azure OpenAI Responses, and initial Microsoft Foundry model/existing-agent Responses are
-implemented; other external providers remain pending.
-**Last updated:** 2026-08-06
+Responses, Azure OpenAI Responses, initial Microsoft Foundry model/existing-agent Responses, and MCP
+client/hosting adapters are implemented; other external providers remain pending.
+**Last updated:** 2026-08-07
 
 This document captures every major public surface in the .NET and Python implementations, its
 proposed Java module/API destination, the expected contract-test source, and the initial-scope
@@ -28,8 +28,11 @@ streaming, response, error, and cancellation paths. `agent-framework-foundry` bi
 streaming, and API-isolation paths. The agents module also has production compaction strategy,
 request-only provider, and explicit persisted-CAS tests; the optional observability module uses the
 OpenTelemetry in-memory exporter for agent/chat/tool/workflow hierarchy, privacy, suppression,
-context propagation, and streaming lifecycle tests. Other external providers and later-parity rows
-remain pending.
+context propagation, and streaming lifecycle tests. `agent-framework-mcp` and
+`agent-framework-hosting-mcp` use the official SDK in child-JVM stdio and loopback Streamable HTTP
+integration tests covering initialization, pagination, structured/rich content, callbacks, errors,
+approval/input-required boundaries, cancellation, timeout, concurrency, overflow, payload/host
+security, and cleanup. Other external providers and later-parity rows remain pending.
 
 ---
 
@@ -144,7 +147,7 @@ mechanically checks the matrix, manifest, and fixture directory.
 | Function tool / annotation | `Microsoft.Extensions.AI` · `AIFunction`, `AITool` | `agent-framework-core` · `FunctionTool`, `tool` decorator, `FunctionInvocationLayer`, `FunctionInvocationConfiguration` | `agent-framework-tools` · `com.microsoft.agents.tools.FunctionTool`, `FunctionInvocationLoop`, `@ToolMethod` (implemented) | `dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests`; [`docs/specs/004-python-function-calling-loop.md`](../specs/004-python-function-calling-loop.md); `JCF-TOOLS-002`, `JCF-TOOLS-003`, `JCF-TOOLS-004`, `JCF-TOOLS-005`, `JCF-TOOLS-006`, `JCF-TOOLS-009`, `JCF-TOOLS-012` | `initial-scope` |
 | Tool mode / normalization | — | `agent-framework-core` · `ToolMode`, `normalize_tools`, `validate_tools` | `agent-framework-tools` · `com.microsoft.agents.tools.ToolMode`, `FunctionTools.normalize` (implemented) | `JCF-TOOLS-001` | `initial-scope` |
 | Shell tool | `Microsoft.Agents.AI.Tools.Shell` | `agent-framework-core` · `SupportsShellTool` | `agent-framework-tools-shell` · `com.microsoft.agents.tools.shell` | `JCF-TOOLS` | `later-parity` |
-| MCP tools (client) | `Microsoft.Agents.AI.Mcp` · `McpTaskOptions`, `TaskAwareMcpClientAIFunction`, MCP Skills | `agent-framework-core` · `MCPStdioTool`, `MCPStreamableHTTPTool`, `MCPWebsocketTool`, `MCPTaskOptions`, `SamplingApprovalCallback` | `agent-framework-mcp` · `com.microsoft.agents.protocols.mcp` | `dotnet/tests/Microsoft.Agents.AI.UnitTests` | `later-parity` |
+| MCP tools (client) | `Microsoft.Agents.AI.Mcp` · MCP client tools | `agent-framework-core` · `MCPStdioTool`, `MCPStreamableHTTPTool`, callbacks | `agent-framework-mcp` · `MCPClient`, secure stdio/Streamable HTTP, rich content, pages, callbacks, `FunctionTool` adaptation (implemented) | `JCF-PROTOCOLS-001`; Java loopback SDK tests plus Python/.NET references | `initial-scope` |
 
 **Key source references**
 
@@ -193,7 +196,7 @@ mechanically checks the matrix, manifest, and fixture directory.
 | Workflow core / builder | `Microsoft.Agents.AI.Workflows` · `Workflow`, `WorkflowBuilder`, `WorkflowSession`, `WorkflowHostAgent` | `agent-framework-core` · `Workflow`, `WorkflowBuilder`, `WorkflowAgent`, `WorkflowContext` | `agent-framework-workflows` · immutable typed `Workflow<I,O>` / `WorkflowBuilder<I,O>` and deterministic superstep runtime (implemented; `JCF-WORKFLOWS-001` bound) | `dotnet/tests/Microsoft.Agents.AI.Workflows.Generators.UnitTests`; `JCF-WORKFLOWS-001` | `initial-scope` |
 | Edges / graph | `Microsoft.Agents.AI.Workflows` · `Edge`, `FanInEdgeData`, `FanOutEdgeData`, `SwitchBuilder` | `agent-framework-core` · `Edge`, `Case`, `Default`, `FanInEdgeGroup`, `FanOutEdgeGroup`, `SwitchCaseEdgeGroup` | `agent-framework-workflows` · direct/conditional `Edge`, `FanOutEdgeGroup`, `FanInEdgeGroup`, epoch-safe `FanInInput` (implemented; `JCF-WORKFLOWS-002` bound) | `JCF-WORKFLOWS-002` | `initial-scope` |
 | Executor / function executor | `Microsoft.Agents.AI.Workflows` · `Executor`, `FunctionExecutor`, `AggregatingExecutor` | `agent-framework-core` · `Executor`, `FunctionExecutor`, `handler`, `executor` | `agent-framework-workflows` · typed `Executor<I,O>`, `FunctionExecutor<I,O>`, and optional message-based `AgentExecutor` (implemented; `JCF-WORKFLOWS-001`, `JCF-WORKFLOWS-003` bound) | `JCF-WORKFLOWS-001`, `JCF-WORKFLOWS-003` | `initial-scope` |
-| Sequential / concurrent / handoff / group chat / Magentic | `Microsoft.Agents.AI.Workflows` · `SequentialWorkflowBuilder`, `ConcurrentWorkflowBuilder`, `HandoffWorkflowBuilder`, `GroupChatWorkflowBuilder`, `MagenticWorkflowBuilder` | `agent-framework-orchestrations` | `agent-framework-orchestrations` · typed shared runtime plus all five patterns, deterministic events/results, cancellation, bounded streaming, one-time process-local continuation resume, and Magentic ledger (implemented; no cross-process orchestration checkpoint guarantee) | Java orchestration pattern/lifecycle/resume/fake-transport tests; `JCF-ORCHESTRATIONS` remains reserved | `initial-scope` |
+| Sequential / concurrent / handoff / group chat / Magentic | `Microsoft.Agents.AI.Workflows` · `SequentialWorkflowBuilder`, `ConcurrentWorkflowBuilder`, `HandoffWorkflowBuilder`, `GroupChatWorkflowBuilder`, `MagenticWorkflowBuilder` | `agent-framework-orchestrations` | `agent-framework-orchestrations` · typed shared runtime plus all five patterns, deterministic events/results, cancellation, bounded streaming, one-time process-local continuation resume, and Magentic ledger (implemented; no cross-process orchestration checkpoint guarantee) | Java orchestration pattern/lifecycle/resume/fake-transport tests; `JCF-ORCHESTRATIONS-001` | `initial-scope` |
 | Functional workflow | — | `agent-framework-core` · `FunctionalWorkflow`, `FunctionalWorkflowAgent`, `step`, `workflow`, `RunContext` | `agent-framework-workflows` · `com.microsoft.agents.workflows.FunctionalWorkflow` | `JCF-WORKFLOWS` | `later-parity` |
 | Checkpoint storage / resume | `Microsoft.Agents.AI.Workflows` · `CheckpointManager`, `CheckpointInfo` | `agent-framework-core` · `CheckpointStorage`, `FileCheckpointStorage`, `InMemoryCheckpointStorage`, `WorkflowCheckpoint` | `agent-framework-workflows` · CAS `CheckpointStorage`, capabilities/`CheckpointCommit`, detached `InMemoryCheckpointStorage`, version-1 `WorkflowCheckpointCodec`, and identity/schema/fingerprint/revision-checked resume (implemented; `JCF-WORKFLOWS-004`, `JCF-WORKFLOWS-005` bound) | `JCF-WORKFLOWS-004`, `JCF-WORKFLOWS-005`; [`docs/decisions/0038-java-state-serialization-and-compatibility.md`](../decisions/0038-java-state-serialization-and-compatibility.md) | `initial-scope` |
 | Workflow events | `Microsoft.Agents.AI.Workflows` · `WorkflowEvent`, `WorkflowOutputEvent`, `ExecutorCompletedEvent`, `SuperStepCompletedEvent` | `agent-framework-core` · `WorkflowEvent`, `WorkflowEventType`, `WorkflowRunState` | `agent-framework-workflows` · deterministically sequenced `WorkflowEvent`, bounded single-subscriber stream, finite discard-at-source path, and one terminal outcome (implemented) | `JCF-WORKFLOWS-001`, `JCF-WORKFLOWS-003`, `JCF-WORKFLOWS-004` | `initial-scope` |
@@ -232,7 +235,7 @@ mechanically checks the matrix, manifest, and fixture directory.
 | ASP.NET Core-specific route extensions | `Microsoft.Agents.AI.Hosting.AspNetCore` · `MapOpenAIResponses`, `MapA2A`, `MapAGUI` | — | no Java counterpart | `JCF-HOSTING-ASPNET-SURFACE` | `n/a` |
 | A2A hosting | `Microsoft.Agents.AI.Hosting.A2A` + `AspNetCore` · `A2AAgent`, `A2AAgentSession` | `agent-framework-hosting-a2a` · `A2AExecutor` | `agent-framework-hosting-a2a` · protocol types in `com.microsoft.agents.protocols.a2a` | `dotnet/tests/Microsoft.Agents.AI.Hosting.A2A.UnitTests` | `later-parity` |
 | AG-UI hosting | `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` · `AGUIEndpointRouteBuilderExtensions`, `AGUIServerSentEventsResult` | `agent-framework-ag-ui` · `AgentFrameworkAgent`, `AGUIHttpService`, `add_agent_framework_fastapi_endpoint` | `agent-framework-hosting-agui` · protocol types in `com.microsoft.agents.protocols.agui` | `dotnet/tests/Microsoft.Agents.AI.Hosting.AGUI.AspNetCore.UnitTests` | `later-parity` |
-| MCP hosting | `Microsoft.Agents.AI.Mcp` · `Skills/` | `agent-framework-hosting-mcp` · `AgentMCPTool`, `WorkflowMCPTool`, `mcp_to_run`, `mcp_from_run` | `agent-framework-hosting-mcp` · protocol types in `com.microsoft.agents.protocols.mcp` | `JCF-PROTOCOLS` | `later-parity` |
+| MCP hosting | `Microsoft.Agents.AI.Mcp` server integration | `agent-framework-hosting-mcp` · `AgentMCPTool`, `WorkflowMCPTool`, conversions | `agent-framework-hosting-mcp` · `MCPServer`, `MCPAgentTool`, prompt/resource adapters, stdio and embedded Streamable HTTP/SSE (implemented) | `JCF-PROTOCOLS-002`; Java official-SDK HTTP/stdio integration tests | `initial-scope` |
 | Foundry hosting / session | `Microsoft.Agents.AI.Foundry.Hosting` · `HostedSessionContext`, `HostedCallContext`, `AgentSessionStore`, `FoundryToolboxService` | `agent-framework-foundry` (hosting portions) | `agent-framework-foundry-hosting` | `dotnet/tests/Microsoft.Agents.AI.Foundry.Hosting.UnitTests` | `later-parity` |
 | Telegram hosting | — | `agent-framework-hosting-telegram` | `agent-framework-hosting-telegram` · `com.microsoft.agents.hosting.telegram` | `JCF-HOSTING` | `later-parity` |
 | Dev UI hosting | `Microsoft.Agents.AI.DevUI` + `Aspire.Hosting.AgentFramework.DevUI` | `agent-framework-devui` | `agent-framework-devui` | `dotnet/tests/Microsoft.Agents.AI.DevUI.UnitTests` | `later-parity` |
@@ -350,7 +353,7 @@ Spec: [`docs/specs/004-feature-usage-telemetry.md`](../specs/004-feature-usage-t
 |---|---|---|---|---|---|
 | Purview data governance | `Microsoft.Agents.AI.Purview` | `agent-framework-purview` | `agent-framework-purview` | `JCF-INTEGRATIONS` | `later-parity` |
 | CodeAct / LocalCodeAct | `Microsoft.Agents.AI.LocalCodeAct` | `agent-framework-monty` (CodeAct alpha) | `agent-framework-codeact` | `dotnet/tests/Microsoft.Agents.AI.LocalCodeAct.UnitTests` | `later-parity` |
-| Orchestrations | — | `agent-framework-orchestrations` | `agent-framework-orchestrations` · `com.microsoft.agents.orchestrations` (implemented provider-neutral pattern runtime) | Java orchestration tests; `JCF-ORCHESTRATIONS` remains reserved | `initial-scope` |
+| Orchestrations | — | `agent-framework-orchestrations` | `agent-framework-orchestrations` · `com.microsoft.agents.orchestrations` (implemented provider-neutral pattern runtime) | Java orchestration tests; `JCF-ORCHESTRATIONS-001` | `initial-scope` |
 | Tools (general) | — | `agent-framework-tools` | `agent-framework-tools` · `com.microsoft.agents.tools` | `JCF-TOOLS` | `later-parity` |
 | Lab / experimental | — | `agent-framework-lab` | no supported Java publication | `JCF-INTEGRATIONS` | `n/a` |
 

@@ -12,7 +12,9 @@ sequential, concurrent, handoff, group-chat, and Magentic patterns. `agent-frame
 `agent-framework-azure-openai`, and `agent-framework-foundry` provide the initial external provider
 surfaces through their official SDKs. Request-context compaction is implemented in agents, and the
 optional observability module provides OpenTelemetry agent/chat/tool/workflow decorators; other
-external providers remain later work.
+external providers remain later work. `agent-framework-mcp` provides the official MCP Java SDK
+client/tool boundary, and `agent-framework-hosting-mcp` exposes framework tools and agents over
+stdio or Streamable HTTP/SSE.
 
 ## Prerequisites
 
@@ -49,14 +51,44 @@ The shared-runtime dependency direction is:
 `orchestrations -> agents -> tools -> core`
 
 `agent-framework-observability` and `agent-framework-reactor-adapter` are optional outward adapters
-that depend inward on the shared runtime. `agent-framework-openai`, `agent-framework-azure-openai`,
-and `agent-framework-foundry` are outward provider adapters. The Azure modules reuse the implemented
-OpenAI Responses protocol boundary, and every provider ultimately depends inward on
-`agent-framework-agents`; the shared runtime never depends on a provider.
+that depend inward on the shared runtime. `agent-framework-mcp` and
+`agent-framework-hosting-mcp` are outward protocol/hosting adapters. `agent-framework-openai`,
+`agent-framework-azure-openai`, and `agent-framework-foundry` are outward provider adapters. The
+Azure modules reuse the implemented OpenAI Responses protocol boundary, and every adapter depends
+inward on the smallest shared module it needs; the shared runtime never depends on an adapter.
 `agent-framework-bom` aligns all published module
 versions and contains no runtime classes. `agent-framework-conformance` contains versioned,
 language-neutral fixtures and test-support APIs; it is not published, is not in the BOM, and cannot
 be a production dependency of published modules.
+
+## Model Context Protocol
+
+The MCP modules pin the official stable `io.modelcontextprotocol.sdk:mcp:2.0.0` implementation.
+Their public APIs contain only framework-owned types and JDK contracts:
+
+```java
+try (MCPClient client = MCPClient.create(
+        MCPStreamableHTTPTransport.builder(URI.create("https://mcp.example.com/mcp"))
+                .allowedHosts(Set.of("mcp.example.com"))
+                .build())) {
+    List<FunctionTool> tools = client.asFunctionToolsAsync("docs")
+            .toCompletableFuture()
+            .join();
+}
+```
+
+```java
+MCPServerHandle server = MCPServer.builder("local-tools-mcp", "1.0.0")
+        .tools(functionTools)
+        .build()
+        .startStdio();
+```
+
+Stdio uses an argument vector and allowlisted child environment. Remote clients require HTTPS and
+disable redirects; the embedded HTTP server is loopback-only unless explicitly placed behind a
+trusted TLS proxy. See [`agent-framework-mcp/README.md`](./agent-framework-mcp/README.md) and
+[`agent-framework-hosting-mcp/README.md`](./agent-framework-hosting-mcp/README.md) for lifecycle,
+limits, callback, approval, and unsupported-resume details.
 
 ## Core API
 

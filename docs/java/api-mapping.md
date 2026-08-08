@@ -3,8 +3,8 @@
 **Task ID:** `java-parity-baseline`
 **Status:** Core model, tools, agents, sessions, context/history providers, context compaction,
 middleware, approval continuation, workflow and orchestration runtimes, optional OpenTelemetry
-observability, and the initial Responses providers are implemented; other external providers remain
-proposed.
+observability, the initial Responses providers, and MCP client/hosting adapters are implemented;
+other external providers remain proposed.
 **Last updated:** 2026-08-06
 
 This document provides the cross-language name mapping so that the Java implementation uses
@@ -73,7 +73,7 @@ initial/later-parity status.
 | **A2A agent (client)** | `A2AAgent` | `A2AAgent` | `A2AAgent` | Identical. |
 | **A2A executor (server)** | `A2AAgentSession` bridging | `A2AExecutor` | `A2AExecutor` | Java follows Python name. |
 | **AG-UI** | `AGUIEndpointRouteBuilderExtensions` | `AgentFrameworkAgent` (AG-UI wrapper) | `AGUIAdapter` | Java introduces adapter name. |
-| **MCP tool (client)** | `TaskAwareMcpClientAIFunction` | `MCPStdioTool`, `MCPStreamableHTTPTool`, `MCPWebsocketTool` | `MCPTool` variants | Java follows Python naming pattern. |
+| **MCP tool (client)** | `TaskAwareMcpClientAIFunction` | `MCPStdioTool`, `MCPStreamableHTTPTool`, `MCPWebsocketTool` | `MCPClient`, `MCPStdioTransport`, `MCPStreamableHTTPTransport`, `MCPToolDescriptor` | Implemented with official SDK 2.0.0, framework-owned content/results, cursor bounds, callbacks, and deterministic `FunctionTool` name adaptation. |
 | **Foundry agent** | `FoundryAgent` | `FoundryChatClient` + `FoundryAgent` | `FoundryAgent` | Identical to .NET. |
 | **Evaluation** | `Evaluation/` (Foundry) | `evaluate_agent`, `evaluate_workflow`, `Evaluator` | `AgentEvaluator` | Java adapts .NET class-name convention. |
 | **Feature stage** | — | `ExperimentalFeature`, `ReleaseCandidateFeature` | `@Experimental`, `@ReleaseCandidate` | Java annotation equivalents. |
@@ -101,7 +101,8 @@ initial/later-parity status.
 | Hosting abstractions | `Microsoft.Agents.AI.Hosting` | `agent-framework-hosting` | `com.microsoft.agents:agent-framework-hosting` · `com.microsoft.agents.hosting` |
 | A2A protocol | `Microsoft.Agents.AI.A2A` + `Hosting.A2A` | `agent-framework-a2a` + `agent-framework-hosting-a2a` | `com.microsoft.agents:agent-framework-a2a` · `com.microsoft.agents.protocols.a2a` |
 | AG-UI protocol | `Microsoft.Agents.AI.Hosting.AGUI.AspNetCore` | `agent-framework-ag-ui` | `com.microsoft.agents:agent-framework-agui` · `com.microsoft.agents.protocols.agui` |
-| MCP protocol/tools adapter | `Microsoft.Agents.AI.Mcp` | `agent-framework-hosting-mcp` | `com.microsoft.agents:agent-framework-mcp` · `com.microsoft.agents.protocols.mcp` |
+| MCP protocol/tools adapter | `Microsoft.Agents.AI.Mcp` | `agent-framework-core` MCP client tools | `com.microsoft.agents:agent-framework-mcp` · `com.microsoft.agents.protocols.mcp` (implemented) |
+| MCP server/hosting adapter | `Microsoft.Agents.AI.Mcp` server integration | `agent-framework-hosting-mcp` | `com.microsoft.agents:agent-framework-hosting-mcp` · `com.microsoft.agents.hosting.mcp` (implemented) |
 | Cosmos storage | `Microsoft.Agents.AI.CosmosNoSql` | `agent-framework-azure-cosmos` | `com.microsoft.agents:agent-framework-azure-cosmos` · `com.microsoft.agents.storage.cosmos` |
 | Redis / Valkey storage | `Microsoft.Agents.AI.Valkey` | `agent-framework-redis` | `com.microsoft.agents:agent-framework-valkey` · `com.microsoft.agents.storage.valkey` |
 | Mem0 memory | `Microsoft.Agents.AI.Mem0` | `agent-framework-mem0` | `com.microsoft.agents:agent-framework-mem0` · `com.microsoft.agents.storage.mem0` |

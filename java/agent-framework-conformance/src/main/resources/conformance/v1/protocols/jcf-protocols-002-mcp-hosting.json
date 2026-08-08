@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROTOCOLS-002",
+  "kind": "contract",
+  "description": "MCP hosting exposes framework tools, agents, prompts, and resources with bounded execution and explicit human-input boundaries.",
+  "input": {
+    "transports": ["stdio", "streamableHttp"],
+    "primitives": ["functionTool", "agent", "prompt", "resource"],
+    "approvalMode": "alwaysRequire",
+    "agentOutcome": "inputRequired"
+  },
+  "expected": {
+    "officialSdkServer": true,
+    "schemaValidationEnabled": true,
+    "approvalReturnedAsError": true,
+    "inputRequiredReturnedAsError": true,
+    "toolResultsTerminal": true,
+    "crossProcessResumeClaimed": false,
+    "payloadAndConcurrencyBounded": true,
+    "remoteHttpRequiresTlsBoundary": true
+  }
+}

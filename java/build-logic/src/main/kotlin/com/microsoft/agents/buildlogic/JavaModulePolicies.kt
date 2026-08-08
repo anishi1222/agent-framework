@@ -48,6 +48,30 @@ internal object JavaModulePolicies {
                     setOf("agent-framework-agents"),
                     "com.microsoft.agents.adapters.reactor",
                 ),
+            "agent-framework-mcp" to
+                JavaModulePolicy(
+                    setOf("agent-framework-tools"),
+                    "com.microsoft.agents.protocols.mcp",
+                ),
+            "agent-framework-hosting-mcp" to
+                JavaModulePolicy(
+                    setOf("agent-framework-agents", "agent-framework-mcp"),
+                    "com.microsoft.agents.hosting.mcp",
+                ),
+            "agent-framework-a2a" to
+                JavaModulePolicy(
+                    setOf("agent-framework-agents"),
+                    "com.microsoft.agents.protocols.a2a",
+                ),
+            "agent-framework-hosting-a2a" to
+                JavaModulePolicy(
+                    setOf(
+                        "agent-framework-a2a",
+                        "agent-framework-agents",
+                        "agent-framework-workflows",
+                    ),
+                    "com.microsoft.agents.hosting.a2a",
+                ),
             "agent-framework-openai" to
                 JavaModulePolicy(
                     setOf("agent-framework-agents"),

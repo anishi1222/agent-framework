@@ -35,7 +35,7 @@ class ConformanceManifestCoverageTest {
         Map<String, Set<String>> manifestCasesByArea = manifestCasesByArea();
 
         // Act and assert
-        assertThat(matrixCasesByArea).hasSize(29);
+        assertThat(matrixCasesByArea).hasSize(33);
         assertThat(matrixCasesByArea).isEqualTo(manifestCasesByArea);
     }
 
@@ -76,6 +76,8 @@ class ConformanceManifestCoverageTest {
                         "JCF-AGENTS",
                         "JCF-SESSIONS",
                         "JCF-WORKFLOWS",
+                        "JCF-ORCHESTRATIONS",
+                        "JCF-PROTOCOLS",
                         "JCF-HOSTING",
                         "JCF-PROVIDERS");
     }

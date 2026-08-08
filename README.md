@@ -39,10 +39,12 @@ Explore new MAF capabilities and real implementation patterns on the [official b
 
 - **Python and C#/.NET Support**: Full framework support for both Python and C#/.NET implementations with consistent APIs
   - [Python packages](./python/packages/) | [.NET source](./dotnet/src/)
-- **Java 25 Implementation**: Provider-neutral core, tools, agents, workflows, providers, observability,
-  and typed sequential/concurrent/handoff/group-chat/Magentic orchestrations
+- **Java 25 Implementation**: Provider-neutral core, tools, agents, workflows, providers,
+  observability, typed orchestrations, and official-SDK MCP client/stdio/Streamable HTTP hosting
   - [Java developer guide](./java/README.md) |
-    [Java orchestration guide](./java/agent-framework-orchestrations/README.md)
+    [Java orchestration guide](./java/agent-framework-orchestrations/README.md) |
+    [Java MCP client](./java/agent-framework-mcp/README.md) |
+    [Java MCP hosting](./java/agent-framework-hosting-mcp/README.md)
 - **Multiple Agent Provider Support**: Support for various LLM providers with more being added continuously
   - [Python examples](./python/samples/02-agents/providers/) | [.NET examples](./dotnet/samples/02-agents/AgentProviders/)
 - **Middleware**: Flexible middleware system for request/response processing, exception handling, and custom pipelines

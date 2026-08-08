@@ -386,6 +386,10 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                     "agent-framework-openai",
                     "agent-framework-azure-openai",
                     "agent-framework-foundry",
+                    "agent-framework-mcp",
+                    "agent-framework-hosting-mcp",
+                    "agent-framework-a2a",
+                    "agent-framework-hosting-a2a",
                 )
 
         val AZURE_PROVIDER_MODULES =
@@ -413,6 +417,11 @@ class ArchitectureConventionPlugin : Plugin<Project> {
                 "com.openai.",
                 "dev.langchain4j.",
                 "io.opentelemetry.",
+                "io.modelcontextprotocol.",
+                "jakarta.servlet.",
+                "org.a2aproject.",
+                "org.apache.catalina.",
+                "org.apache.coyote.",
                 "org.springframework.ai.",
                 "reactor.core.",
                 "software.amazon.awssdk.",

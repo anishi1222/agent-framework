@@ -288,6 +288,33 @@
       "fixture": "conformance/v1/hosting/jcf-hosting-001-harness.json",
       "kind": "contract",
       "sourceReferences": ["docs/specs/002-python-hosting-channels.md", "docs/specs/003-dotnet-hosting-protocol-helpers.md"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-001",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["MCP tools (client)"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-001-mcp-client.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/core/tests/core/test_mcp.py", "dotnet/tests/Microsoft.Agents.AI.Mcp.UnitTests"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-002",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["MCP hosting"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-002-mcp-hosting.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/hosting-mcp/tests/hosting_mcp", "dotnet/samples/02-agents/ModelContextProtocol"]
+    },
+    {
+      "caseId": "JCF-ORCHESTRATIONS-001",
+      "suiteId": "JCF-ORCHESTRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Sequential / concurrent / handoff / group chat / Magentic", "Orchestrations"],
+      "fixture": "conformance/v1/orchestrations/jcf-orchestrations-001-patterns.json",
+      "kind": "contract",
+      "sourceReferences": ["java/agent-framework-orchestrations/src/test", "python/packages/core/tests/orchestrations", "dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests"]
     }
   ]
 }

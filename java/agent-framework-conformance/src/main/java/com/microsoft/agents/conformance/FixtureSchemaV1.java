@@ -415,6 +415,10 @@ final class FixtureSchemaV1 {
             case "JCF-PROVIDERS-001" -> validateOpenAiProviderContract(input, expected, inputSource, expectedSource);
             case "JCF-PROVIDERS-002" -> validateFoundryProviderContract(input, expected, inputSource, expectedSource);
             case "JCF-HOSTING-001" -> validateHostingContract(input, expected, inputSource, expectedSource);
+            case "JCF-PROTOCOLS-001" -> validateMcpClientContract(input, expected, inputSource, expectedSource);
+            case "JCF-PROTOCOLS-002" -> validateMcpHostingContract(input, expected, inputSource, expectedSource);
+            case "JCF-ORCHESTRATIONS-001" ->
+                validateOrchestrationContract(input, expected, inputSource, expectedSource);
             default ->
                 throw JsonSchemaV1.invalid(
                         sourceName + " has no contract schema for caseId '" + caseId + "' in schemaVersion 1.");
@@ -1604,6 +1608,111 @@ final class FixtureSchemaV1 {
                 "runtimeDependencyOfPublishedModules",
                 "publishedArtifact",
                 "routesOwnedByHarness");
+    }
+
+    private static void validateMcpClientContract(
+            JsonNode input, JsonNode expected, String inputSource, String expectedSource) {
+        JsonSchemaV1.exactObject(
+                input, inputSource, "transports", "remoteToolNames", "contentKinds", "cursor", "progressToken");
+        JsonSchemaV1.requireTextArray(input, "transports", inputSource, true, true);
+        JsonSchemaV1.requireTextArray(input, "remoteToolNames", inputSource, true, true);
+        JsonSchemaV1.requireTextArray(input, "contentKinds", inputSource, true, true);
+        JsonSchemaV1.requireText(input, "cursor", inputSource);
+        JsonSchemaV1.requireText(input, "progressToken", inputSource);
+        JsonSchemaV1.exactObject(
+                expected,
+                expectedSource,
+                "sdkTypesInPublicApi",
+                "normalizedToolNamesUnique",
+                "exactRemoteNamesUsedForDispatch",
+                "structuredContentPreserved",
+                "cursorTraversalBounded",
+                "childProcessOwnedAndClosed",
+                "remoteToolApprovalRequiredByDefault");
+        requireBooleanFields(
+                expected,
+                expectedSource,
+                "sdkTypesInPublicApi",
+                "normalizedToolNamesUnique",
+                "exactRemoteNamesUsedForDispatch",
+                "structuredContentPreserved",
+                "cursorTraversalBounded",
+                "childProcessOwnedAndClosed",
+                "remoteToolApprovalRequiredByDefault");
+        requireFalse(expected, "sdkTypesInPublicApi", expectedSource);
+        requireTrue(expected, "normalizedToolNamesUnique", expectedSource);
+        requireTrue(expected, "exactRemoteNamesUsedForDispatch", expectedSource);
+        requireTrue(expected, "structuredContentPreserved", expectedSource);
+        requireTrue(expected, "cursorTraversalBounded", expectedSource);
+        requireTrue(expected, "childProcessOwnedAndClosed", expectedSource);
+        requireTrue(expected, "remoteToolApprovalRequiredByDefault", expectedSource);
+    }
+
+    private static void validateMcpHostingContract(
+            JsonNode input, JsonNode expected, String inputSource, String expectedSource) {
+        JsonSchemaV1.exactObject(input, inputSource, "transports", "primitives", "approvalMode", "agentOutcome");
+        JsonSchemaV1.requireTextArray(input, "transports", inputSource, true, true);
+        JsonSchemaV1.requireTextArray(input, "primitives", inputSource, true, true);
+        JsonSchemaV1.requireText(input, "approvalMode", inputSource);
+        JsonSchemaV1.requireText(input, "agentOutcome", inputSource);
+        JsonSchemaV1.exactObject(
+                expected,
+                expectedSource,
+                "officialSdkServer",
+                "schemaValidationEnabled",
+                "approvalReturnedAsError",
+                "inputRequiredReturnedAsError",
+                "toolResultsTerminal",
+                "crossProcessResumeClaimed",
+                "payloadAndConcurrencyBounded",
+                "remoteHttpRequiresTlsBoundary");
+        requireBooleanFields(
+                expected,
+                expectedSource,
+                "officialSdkServer",
+                "schemaValidationEnabled",
+                "approvalReturnedAsError",
+                "inputRequiredReturnedAsError",
+                "toolResultsTerminal",
+                "crossProcessResumeClaimed",
+                "payloadAndConcurrencyBounded",
+                "remoteHttpRequiresTlsBoundary");
+        requireTrue(expected, "officialSdkServer", expectedSource);
+        requireTrue(expected, "schemaValidationEnabled", expectedSource);
+        requireTrue(expected, "approvalReturnedAsError", expectedSource);
+        requireTrue(expected, "inputRequiredReturnedAsError", expectedSource);
+        requireTrue(expected, "toolResultsTerminal", expectedSource);
+        requireFalse(expected, "crossProcessResumeClaimed", expectedSource);
+        requireTrue(expected, "payloadAndConcurrencyBounded", expectedSource);
+        requireTrue(expected, "remoteHttpRequiresTlsBoundary", expectedSource);
+    }
+
+    private static void validateOrchestrationContract(
+            JsonNode input, JsonNode expected, String inputSource, String expectedSource) {
+        JsonSchemaV1.exactObject(input, inputSource, "patterns", "resumeBoundary");
+        JsonSchemaV1.requireTextArray(input, "patterns", inputSource, true, true);
+        JsonSchemaV1.requireText(input, "resumeBoundary", inputSource);
+        JsonSchemaV1.exactObject(
+                expected,
+                expectedSource,
+                "deterministicEvents",
+                "boundedStreaming",
+                "cancellationPropagated",
+                "inputRequiredExplicit",
+                "crossProcessResumeClaimed");
+        requireBooleanFields(
+                expected,
+                expectedSource,
+                "deterministicEvents",
+                "boundedStreaming",
+                "cancellationPropagated",
+                "inputRequiredExplicit",
+                "crossProcessResumeClaimed");
+        requireTrue(expected, "deterministicEvents", expectedSource);
+        requireTrue(expected, "boundedStreaming", expectedSource);
+        requireTrue(expected, "cancellationPropagated", expectedSource);
+        requireTrue(expected, "inputRequiredExplicit", expectedSource);
+        requireFalse(expected, "crossProcessResumeClaimed", expectedSource);
     }
 
     private static JsonNode requiredNonEmptyObject(JsonNode root, String field, String sourceName) {

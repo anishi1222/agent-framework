@@ -30,6 +30,10 @@ compile and runtime version. Production and test compilation use `--release 25`.
 - `agent-framework-orchestrations`: higher-level orchestration patterns; depends directly on agents.
 - `agent-framework-observability`: optional telemetry decorators; depends inward on agents.
 - `agent-framework-reactor-adapter`: optional Reactor bridge; depends inward on agents.
+- `agent-framework-mcp`: official MCP Java SDK client and `FunctionTool` adapter; SDK and Reactor
+  types remain internal.
+- `agent-framework-hosting-mcp`: stdio and embedded Streamable HTTP/SSE hosting for framework tools,
+  agents, prompts, and resources; depends inward on agents and MCP.
 - `agent-framework-openai`: official OpenAI Responses provider adapter; depends inward on agents and
   keeps SDK types out of public signatures.
 - `agent-framework-azure-openai`: Azure OpenAI Responses adapter with API-key or Azure Identity
