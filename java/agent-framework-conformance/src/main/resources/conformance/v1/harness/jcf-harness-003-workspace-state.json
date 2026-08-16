@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HARNESS-003",
+  "kind": "contract",
+  "description": "Harness workspace providers isolate memory, approval-gate shared access, maintain todos and modes atomically, and reject unsafe filesystem paths.",
+  "input": {
+    "sharedApprovalMode": "alwaysRequire",
+    "memoryFile": "plan.md",
+    "nestedMemoryFile": "nested/secret.md",
+    "defaultMode": "plan",
+    "nextMode": "execute",
+    "todoTitles": ["first", "second"]
+  },
+  "expected": {
+    "fileAccessApprovalRequired": true,
+    "fileAccessEditResult": "alpha\nBETA",
+    "memorySessionIsolated": true,
+    "memoryIndexDescribesVisibleFiles": true,
+    "nestedMemoryRejected": true,
+    "todoIdsUnique": true,
+    "completedTodoExcludedFromRemaining": true,
+    "normalizedMode": "execute",
+    "externalModeNotificationOneShot": true,
+    "filesystemTraversalRejected": true,
+    "filesystemSymlinkRejected": true
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-004",
+  "kind": "contract",
+  "description": "A delegating agent transparently forwards metadata and run surfaces while retaining explicit inner-agent ownership.",
+  "input": {
+    "agent": {"id": "delegate-001", "name": "inner"},
+    "closeInnerAgent": true
+  },
+  "expected": {
+    "metadataForwarded": true,
+    "runHandleForwarded": true,
+    "streamPublisherForwarded": true,
+    "callerOwnedByDefault": true,
+    "ownedInnerClosed": true
+  }
+}

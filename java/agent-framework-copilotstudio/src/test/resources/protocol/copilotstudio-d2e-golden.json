@@ -1,0 +1,35 @@
+{
+  "apiVersion": "2022-03-01-preview",
+  "startRequest": {
+    "emitStartConversationEvent": true,
+    "locale": "en-US"
+  },
+  "executeRequest": {
+    "activity": {
+      "id": "activity-1",
+      "type": "message",
+      "text": "hello",
+      "conversation": {
+        "id": "conversation-1"
+      }
+    }
+  },
+  "sse": {
+    "id": "7",
+    "event": "activity",
+    "activity": {
+      "id": "reply-1",
+      "type": "message",
+      "text": "hello back",
+      "timestamp": "2026-08-12T00:00:00Z",
+      "from": {
+        "id": "bot",
+        "name": "Bot"
+      },
+      "conversation": {
+        "id": "conversation-1"
+      },
+      "attachments": []
+    }
+  }
+}

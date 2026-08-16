@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HARNESS-001",
+  "kind": "contract",
+  "description": "Harness assembly is deterministic and its bounded loop streams every iteration while honoring evaluator priority and finite-result options.",
+  "input": {
+    "defaultProviderOrder": ["history", "todo", "mode", "fileMemory"],
+    "optInProviderOrder": ["history", "fileAccess", "backgroundAgents"],
+    "maxIterations": 3,
+    "streamSequence": ["iteration-1", "continue-2", "iteration-2", "continue-3", "iteration-3"],
+    "evaluatorOrder": ["primary", "secondary"]
+  },
+  "expected": {
+    "defaultProviderOrder": ["history", "todo", "mode", "fileMemory"],
+    "optInProviderOrder": ["history", "fileAccess", "backgroundAgents"],
+    "loopInvocationCount": 3,
+    "streamSequence": ["iteration-1", "continue-2", "iteration-2", "continue-3", "iteration-3"],
+    "firstContinuingEvaluatorWins": true,
+    "finiteFinalOnlyMessageCount": 1,
+    "streamingIgnoresFiniteFinalOnly": true,
+    "judgeStructuredOutputRequested": true,
+    "judgeMoreMarkerWins": true
+  }
+}

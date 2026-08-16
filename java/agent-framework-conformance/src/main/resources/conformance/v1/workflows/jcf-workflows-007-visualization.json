@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-007",
+  "kind": "contract",
+  "description": "Workflow visualization emits deterministic safe DOT and Mermaid source for direct, conditional, fan-out, and fan-in topology without invoking external renderers.",
+  "input": {
+    "formats": ["dot", "mermaid"],
+    "entryId": "1 start",
+    "outputId": "end",
+    "nodeIds": ["1 start", "end", "join|quoted", "left side", "left-side"]
+  },
+  "expected": {
+    "deterministic": true,
+    "startStyled": true,
+    "outputStyled": true,
+    "conditionalStyled": true,
+    "fanOutRendered": true,
+    "fanInJunctionRendered": true,
+    "labelsEscaped": true,
+    "aliasesCollisionSafe": true,
+    "externalProcessInvoked": false,
+    "utf8WriteRoundTrip": true
+  }
+}

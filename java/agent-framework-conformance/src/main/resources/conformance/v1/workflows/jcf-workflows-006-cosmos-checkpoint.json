@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-006",
+  "kind": "contract",
+  "description": "Cosmos checkpoints preserve Java workflow state and atomically CAS checkpoint and invocation-ledger mutations.",
+  "input": {
+    "sdk": "com.azure:azure-cosmos:4.81.0",
+    "partitionStrategy": ["workflowId", "checkpointId"],
+    "capabilities": ["ATOMIC_CHECKPOINT_AND_LEDGER"],
+    "documentKinds": ["checkpoint-head", "workflow-checkpoint", "invocation-ledger"]
+  },
+  "expected": {
+    "durableBackend": true,
+    "etagCas": true,
+    "duplicateCheckpointConflicts": true,
+    "checkpointLedgerAtomic": true,
+    "previousRevisionFingerprintPreserved": true,
+    "fanInStateResumable": true,
+    "boundedPartitionListing": true,
+    "deterministicSnapshotSortKey": true,
+    "boundedKeyScopedPurge": true,
+    "purgePreservesOtherKeysAndLedger": true,
+    "purgePartialReport": true,
+    "purgeIdempotent": true,
+    "crossLanguageWireCompatibilityClaimed": false
+  }
+}

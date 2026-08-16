@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-002",
+  "kind": "workflow-trace",
+  "description": "Fan-out delivers once to each branch and fan-in releases one ordered aggregate after all branches complete.",
+  "events": [
+    {"sequence": 0, "type": "executorInvoked", "executorId": "source"},
+    {"sequence": 1, "type": "executorCompleted", "executorId": "source", "outputs": [1]},
+    {"sequence": 2, "type": "fanOut", "sourceId": "source", "targetIds": ["left", "right"], "value": 1},
+    {"sequence": 3, "type": "executorInvoked", "executorId": "left", "input": 1},
+    {"sequence": 4, "type": "executorCompleted", "executorId": "left", "outputs": [2]},
+    {"sequence": 5, "type": "fanInBuffered", "sourceId": "left", "targetId": "join", "value": 2},
+    {"sequence": 6, "type": "executorInvoked", "executorId": "right", "input": 1},
+    {"sequence": 7, "type": "executorCompleted", "executorId": "right", "outputs": [3]},
+    {"sequence": 8, "type": "fanInBuffered", "sourceId": "right", "targetId": "join", "value": 3},
+    {"sequence": 9, "type": "fanInReleased", "sourceIds": ["left", "right"], "targetId": "join", "values": [2, 3]},
+    {"sequence": 10, "type": "executorInvoked", "executorId": "join", "input": [2, 3]},
+    {"sequence": 11, "type": "workflowOutput", "executorId": "join", "value": 5},
+    {"sequence": 12, "type": "executorCompleted", "executorId": "join", "outputs": [5]},
+    {"sequence": 13, "type": "terminal", "outcome": "idle"}
+  ],
+  "expected": {
+    "fanOutDeliveries": {"left": 1, "right": 1},
+    "fanInReleaseCount": 1,
+    "fanInValues": [2, 3],
+    "outputs": [5],
+    "terminalCount": 1
+  }
+}

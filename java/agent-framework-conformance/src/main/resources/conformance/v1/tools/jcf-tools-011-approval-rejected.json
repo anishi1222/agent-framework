@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-011",
+  "kind": "tool-loop",
+  "description": "An explicit approval rejection produces one correlated terminal result without invoking the rejected tool.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-rejected", "name": "write", "invocationId": "run-011:call-rejected"},
+    {"sequence": 1, "type": "approvalRequested", "approvalId": "approval-rejected", "callId": "call-rejected"},
+    {"sequence": 2, "type": "terminal", "outcome": "inputRequired"},
+    {"sequence": 3, "type": "approvalDecision", "approvalId": "approval-rejected", "approved": false},
+    {"sequence": 4, "type": "functionResult", "callId": "call-rejected", "invocationId": "run-011:call-rejected", "outcome": "rejected", "result": "The tool was not executed."},
+    {"sequence": 5, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "rejectionAccepted": true,
+    "toolExecuted": false,
+    "functionResultCount": 1,
+    "invocationCount": 0,
+    "resultCallId": "call-rejected",
+    "resultInvocationId": "run-011:call-rejected",
+    "resultOutcome": "rejected",
+    "terminalCount": 2
+  }
+}

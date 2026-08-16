@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-005",
+  "kind": "run-signal",
+  "description": "Cancellation is idempotent and produces exactly one terminal signal without later success.",
+  "events": [
+    {"sequence": 0, "type": "subscribed"},
+    {"sequence": 1, "type": "demand", "count": 1},
+    {"sequence": 2, "type": "update", "value": "partial"},
+    {"sequence": 3, "type": "cancelRequested", "source": "runHandle"},
+    {"sequence": 4, "type": "cancelRequested", "source": "subscription"},
+    {"sequence": 5, "type": "terminal", "outcome": "cancelled"}
+  ],
+  "expected": {
+    "cancelReturnValues": [true, false],
+    "terminalCount": 1,
+    "terminalOutcome": "cancelled",
+    "successAfterTerminal": false,
+    "updatesAfterCancellation": 0
+  }
+}

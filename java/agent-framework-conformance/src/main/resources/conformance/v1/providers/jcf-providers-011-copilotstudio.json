@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-011",
+  "kind": "contract",
+  "description": "Copilot Studio uses the current Power Platform Direct-to-Engine HTTP/SSE protocol with explicit activity continuations.",
+  "input": {
+    "protocol": "power-platform-direct-to-engine",
+    "serviceApiVersion": "2022-03-01-preview",
+    "verifiedClients": ["python:1.3.0", "dotnet:1.3.171-beta"],
+    "transport": "http-sse",
+    "resumeHeader": "Last-Event-ID"
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "officialJavaSdkAvailable": false,
+    "redirectsFollowed": false,
+    "tokensInUriOrLogs": false,
+    "cursorUsesLastEventId": true,
+    "directLineWatermarkUsed": false,
+    "duplicatesDelivered": false,
+    "oauthActionsAutoExecuted": false,
+    "sessionCasMetadata": true,
+    "conversationIdAuthorizes": false,
+    "cancellationPropagated": true,
+    "callerResourcesPreserved": true
+  }
+}

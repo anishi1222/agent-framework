@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-006",
+  "kind": "contract",
+  "description": "Typed metadata, response conversion, detached session history, and message-source attribution use immutable framework-owned extension helpers.",
+  "input": {
+    "metadata": {
+      "key": "priority",
+      "initial": "one",
+      "replacement": "two"
+    },
+    "messages": {
+      "history": "history",
+      "context": "context",
+      "external": "external",
+      "contextProviderId": "context-1",
+      "historySourceId": "history",
+      "callerSourceId": "caller"
+    }
+  },
+  "expected": {
+    "typedMetadataRoundTrips": true,
+    "metadataCopyOnWrite": true,
+    "existingMetadataPreserved": true,
+    "existingMetadataAvoidsEncoding": true,
+    "wrongMetadataTypeRejected": true,
+    "typeNamedKeySupported": true,
+    "responseFieldsPreserved": true,
+    "updateFieldsPreserved": true,
+    "streamAggregationPreserved": true,
+    "sessionHistoryDetached": true,
+    "defaultSourceType": "External",
+    "sourceOrder": [
+      "ChatHistory:history",
+      "AIContextProvider:context-1",
+      "External:caller"
+    ],
+    "sameSourceReturnsOriginal": true,
+    "malformedAttributionRejected": true
+  }
+}

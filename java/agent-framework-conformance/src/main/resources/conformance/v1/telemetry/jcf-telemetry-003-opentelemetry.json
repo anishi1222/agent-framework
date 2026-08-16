@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TELEMETRY-003",
+  "kind": "contract",
+  "description": "OpenTelemetry instrumentation preserves workflow, agent, chat, and tool hierarchy while keeping content private and terminal settlement idempotent.",
+  "input": {
+    "providerName": "openai",
+    "operations": ["invoke_workflow", "invoke_agent", "chat", "execute_tool"],
+    "cancelledOperation": "execute_tool"
+  },
+  "expected": {
+    "spanCount": 4,
+    "workflowParentRoot": true,
+    "agentParentWorkflow": true,
+    "chatParentAgent": true,
+    "toolParentAgent": true,
+    "cancelledOutcome": "cancelled",
+    "terminalIdempotent": true,
+    "contentCapturedByDefault": false,
+    "durationMetrics": [
+      "gen_ai.invoke_workflow.duration",
+      "gen_ai.invoke_agent.duration",
+      "gen_ai.client.operation.duration",
+      "gen_ai.execute_tool.duration"
+    ]
+  }
+}

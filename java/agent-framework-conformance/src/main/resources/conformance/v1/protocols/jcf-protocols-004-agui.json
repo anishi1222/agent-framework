@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROTOCOLS-004",
+  "kind": "contract",
+  "description": "Java implements a framework-owned strict AG-UI model and codec pinned to the current official TypeScript schema.",
+  "input": {
+    "typescriptCore": "@ag-ui/core@0.0.57",
+    "typescriptEncoder": "@ag-ui/encoder@0.0.57",
+    "typescriptClient": "@ag-ui/client@0.0.57",
+    "dotnetPackages": "AGUI.*@0.0.5",
+    "communityJava": "com.ag-ui.community:java-core:0.1.0",
+    "officialEventCount": 33,
+    "transport": "HTTP POST application/json and incremental text/event-stream",
+    "runInputRequired": ["threadId", "runId", "state", "messages", "tools", "context", "forwardedProps"]
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "exactScreamingSnakeCaseDiscriminators": true,
+    "unknownStandardEventsRejected": true,
+    "rawAndCustomPayloadsPreserved": true,
+    "duplicateKeysTrailingContentAndNonfiniteRejected": true,
+    "jsonPatchPointersValidated": true,
+    "eventStateMachineEnforced": true,
+    "officialEncoderFixtureAccepted": true,
+    "webSocketClaimed": false,
+    "lastEventIdReplayClaimed": false
+  }
+}

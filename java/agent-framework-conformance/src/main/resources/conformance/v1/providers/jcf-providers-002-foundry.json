@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-002",
+  "kind": "contract",
+  "description": "Foundry adapters preserve provider-neutral run behavior while service continuation stays adapter-owned.",
+  "input": {
+    "request": {
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "continuation": {"conversationId": "conversation-001"}
+    },
+    "provider": "foundry"
+  },
+  "expected": {
+    "requestRoleOrder": ["user"],
+    "conversationIdPreservedBetweenToolIterations": true,
+    "frameworkSessionIsolation": true,
+    "providerTypesInSharedApi": false,
+    "crossLanguageSessionWireCompatible": false
+  }
+}

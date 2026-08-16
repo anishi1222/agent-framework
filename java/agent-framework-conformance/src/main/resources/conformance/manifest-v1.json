@@ -1,0 +1,705 @@
+{
+  "schemaVersion": 1,
+  "cases": [
+    {
+      "caseId": "JCF-CORE-001",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Chat message / content"],
+      "fixture": "conformance/v1/core/jcf-core-001-message-content.json",
+      "kind": "message-content",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests/AgentResponseTests.cs", "python/packages/core/agent_framework/_types.py"]
+    },
+    {
+      "caseId": "JCF-CORE-002",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Run options / response", "Streaming responses"],
+      "fixture": "conformance/v1/core/jcf-core-002-response-aggregation.json",
+      "kind": "response-aggregation",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests/AgentResponseUpdateTests.cs", "python/packages/core/agent_framework/_types.py"]
+    },
+    {
+      "caseId": "JCF-CORE-003",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Run options / response"],
+      "fixture": "conformance/v1/core/jcf-core-003-run-options.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/decisions/0036-java-execution-and-streaming-model.md"]
+    },
+    {
+      "caseId": "JCF-CORE-004",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Chat options / finish reason"],
+      "fixture": "conformance/v1/core/jcf-core-004-chat-options.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/java/api-mapping.md"]
+    },
+    {
+      "caseId": "JCF-CORE-005",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Streaming responses"],
+      "fixture": "conformance/v1/core/jcf-core-005-cancellation-terminal.json",
+      "kind": "run-signal",
+      "sourceReferences": ["docs/decisions/0036-java-execution-and-streaming-model.md", "python/packages/core/tests/workflow/test_runner.py"]
+    },
+    {
+      "caseId": "JCF-CORE-006",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Structured output"],
+      "fixture": "conformance/v1/core/jcf-core-006-structured-output.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Abstractions/AIAgentStructuredOutput.cs", "python/packages/core/agent_framework/_agents.py"]
+    },
+    {
+      "caseId": "JCF-CORE-007",
+      "suiteId": "JCF-CORE",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": [
+        "Embedding client interface",
+        "OpenAI Responses and embeddings",
+        "Azure OpenAI Responses, embeddings, identity, and service-version modes"
+      ],
+      "fixture": "conformance/v1/core/jcf-core-007-embeddings.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Abstractions", "python/packages/core/tests/core/test_embedding_client.py", "python/packages/core/tests/core/test_embedding_types.py"]
+    },
+    {
+      "caseId": "JCF-TELEMETRY-001",
+      "suiteId": "JCF-TELEMETRY",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Feature stage decorators"],
+      "fixture": "conformance/v1/telemetry/jcf-telemetry-001-feature-stage.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/core/agent_framework/_feature_stage.py", "python/packages/core/tests/core/test_feature_stage.py"]
+    },
+    {
+      "caseId": "JCF-TELEMETRY-002",
+      "suiteId": "JCF-TELEMETRY",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["User-agent telemetry", "Feature usage bitmask"],
+      "fixture": "conformance/v1/telemetry/jcf-telemetry-002-user-agent-feature-usage.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/decisions/0033-feature-usage-bitmask-user-agent.md", "docs/specs/004-feature-usage-telemetry.md", "python/packages/core/agent_framework/_telemetry.py", "python/packages/core/tests/core/test_telemetry.py"]
+    },
+    {
+      "caseId": "JCF-TELEMETRY-003",
+      "suiteId": "JCF-TELEMETRY",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["OpenTelemetry GenAI observability"],
+      "fixture": "conformance/v1/telemetry/jcf-telemetry-003-opentelemetry.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI", "python/packages/core/agent_framework/_telemetry.py", "java/agent-framework-observability"]
+    },
+    {
+      "caseId": "JCF-AGENTS-001",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Agent interface / base", "Chat client interface", "Streaming responses"],
+      "fixture": "conformance/v1/agents/jcf-agents-001-lifecycle.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests/AIAgentTests.cs", "python/packages/core/tests/core/test_agents.py"]
+    },
+    {
+      "caseId": "JCF-AGENTS-002",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Context providers", "Run context / metadata"],
+      "fixture": "conformance/v1/agents/jcf-agents-002-context-metadata.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Abstractions.UnitTests/AIContextProviderTests.cs", "python/packages/core/agent_framework/_sessions.py"]
+    },
+    {
+      "caseId": "JCF-AGENTS-003",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Agent middleware", "Chat middleware", "Function middleware", "Middleware termination / context"],
+      "fixture": "conformance/v1/agents/jcf-agents-003-middleware.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "python/packages/core/agent_framework/_middleware.py"]
+    },
+    {
+      "caseId": "JCF-AGENTS-004",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Delegating agent"],
+      "fixture": "conformance/v1/agents/jcf-agents-004-delegating-agent.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Abstractions/DelegatingAIAgent.cs", "python/packages/core/agent_framework/_agents.py"]
+    },
+    {
+      "caseId": "JCF-AGENTS-005",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Message injection"],
+      "fixture": "conformance/v1/agents/jcf-agents-005-message-injection.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI/ChatClient/MessageInjectingChatClient.cs", "python/packages/core/agent_framework/_sessions.py"]
+    },
+    {
+      "caseId": "JCF-AGENTS-006",
+      "suiteId": "JCF-AGENTS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Additional properties / extensions"],
+      "fixture": "conformance/v1/agents/jcf-agents-006-extensions.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Abstractions/AdditionalPropertiesExtensions.cs", "dotnet/src/Microsoft.Agents.AI.Abstractions/AgentSessionExtensions.cs", "dotnet/src/Microsoft.Agents.AI.Abstractions/ChatMessageExtensions.cs", "dotnet/src/Microsoft.Agents.AI.Abstractions/AgentResponseExtensions.cs"]
+    },
+    {
+      "caseId": "JCF-CONTEXT-001",
+      "suiteId": "JCF-CONTEXT",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Compaction strategies", "Token estimator SPI", "Message grouping and history integration"],
+      "fixture": "conformance/v1/context/jcf-context-001-compaction.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/core/agent_framework/_compaction.py", "python/packages/core/tests/core/test_compaction.py", "dotnet/src/Microsoft.Agents.AI/Compaction/"]
+    },
+    {
+      "caseId": "JCF-SESSIONS-001",
+      "suiteId": "JCF-SESSIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Session / state"],
+      "fixture": "conformance/v1/sessions/jcf-sessions-001-java-v1-envelope.json",
+      "kind": "session-snapshot",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-SESSIONS-002",
+      "suiteId": "JCF-SESSIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Session store interface"],
+      "fixture": "conformance/v1/sessions/jcf-sessions-002-cas-conflict.json",
+      "kind": "session-snapshot",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-SESSIONS-003",
+      "suiteId": "JCF-SESSIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["In-memory session store"],
+      "fixture": "conformance/v1/sessions/jcf-sessions-003-detached-snapshot.json",
+      "kind": "session-snapshot",
+      "sourceReferences": ["python/packages/core/tests/core/test_sessions.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-001",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool capability contracts", "Tool mode / normalization", "Tools (general)"],
+      "fixture": "conformance/v1/tools/jcf-tools-001-capabilities-normalization.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/java/api-mapping.md", "python/packages/core/agent_framework/_tools.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-002",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-002-normal-call.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "python/packages/core/tests/core/test_function_invocation_logic.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-003",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-003-multiple-calls.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-004",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-004-exactly-once.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-005",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-005-error.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["python/packages/core/tests/core/test_function_invocation_logic.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-006",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation", "Streaming responses"],
+      "fixture": "conformance/v1/tools/jcf-tools-006-streaming-equivalence.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-007",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-007-approval-resume.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["python/packages/core/tests/core/test_harness_tool_approval.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-008",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-008-stale-approval-replay.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "python/packages/core/tests/core/test_function_invocation_logic.py"]
+    },
+    {
+      "caseId": "JCF-TOOLS-009",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-009-in-flight-duplicate.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-010",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-010-duplicate-pending-approval.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0006-userapproval.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-011",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-011-approval-rejected.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["python/packages/core/tests/core/test_harness_tool_approval.py", "docs/decisions/0006-userapproval.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-012",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Function tool / annotation"],
+      "fixture": "conformance/v1/tools/jcf-tools-012-cross-view-exactly-once.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md", "java/AGENTS.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-013",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Tool approval / resume"],
+      "fixture": "conformance/v1/tools/jcf-tools-013-mixed-approval-batch.json",
+      "kind": "tool-loop",
+      "sourceReferences": ["docs/specs/004-python-function-calling-loop.md", "docs/decisions/0006-userapproval.md"]
+    },
+    {
+      "caseId": "JCF-TOOLS-014",
+      "suiteId": "JCF-TOOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Shell tool", "Tools (general)"],
+      "fixture": "conformance/v1/tools/jcf-tools-014-shell-execution.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Tools.Shell/", "python/packages/tools/agent_framework_tools/shell/"]
+    },
+    {
+      "caseId": "JCF-SKILLS-001",
+      "suiteId": "JCF-SKILLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Skills sources / provider"],
+      "fixture": "conformance/v1/skills/jcf-skills-001-provider-sources.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI/Skills/", "python/packages/core/agent_framework/_skills.py"]
+    },
+    {
+      "caseId": "JCF-SKILLS-002",
+      "suiteId": "JCF-SKILLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Skill types"],
+      "fixture": "conformance/v1/skills/jcf-skills-002-types-files.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.UnitTests/AgentSkills/", "python/packages/core/tests/core/test_skills.py"]
+    },
+    {
+      "caseId": "JCF-SKILLS-003",
+      "suiteId": "JCF-SKILLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["MCP skill templates (dotnet)"],
+      "fixture": "conformance/v1/skills/jcf-skills-003-mcp-discovery.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Mcp.UnitTests/Skills/", "python/packages/core/tests/core/test_mcp_skills.py", "SEP-2640"]
+    },
+    {
+      "caseId": "JCF-HARNESS-001",
+      "suiteId": "JCF-HARNESS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Harness agent"],
+      "fixture": "conformance/v1/harness/jcf-harness-001-agent-loop.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Harness/HarnessAgent.cs", "dotnet/src/Microsoft.Agents.AI/Harness/Loop/LoopAgent.cs", "python/packages/core/agent_framework/_harness/_agent.py", "python/packages/core/agent_framework/_harness/_loop.py"]
+    },
+    {
+      "caseId": "JCF-HARNESS-002",
+      "suiteId": "JCF-HARNESS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Background agents"],
+      "fixture": "conformance/v1/harness/jcf-harness-002-background-agents.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Harness/Providers/BackgroundAgentsProvider.cs", "python/packages/core/agent_framework/_harness/_background.py"]
+    },
+    {
+      "caseId": "JCF-HARNESS-003",
+      "suiteId": "JCF-HARNESS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["File access / memory / todo"],
+      "fixture": "conformance/v1/harness/jcf-harness-003-workspace-state.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Harness/Providers/", "python/packages/core/agent_framework/_harness/"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-001",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Workflow core / builder", "Executor / function executor", "Workflow events"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-001-core-events.json",
+      "kind": "workflow-trace",
+      "sourceReferences": ["python/packages/core/tests/workflow/test_workflow.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-002",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Edges / graph", "Workflow validation"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-002-fan-out-in.json",
+      "kind": "workflow-trace",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests/EdgeRunnerTests.cs", "python/packages/core/tests/workflow/test_workflow.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-003",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Executor / function executor", "Workflow events"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-003-failure-cancellation.json",
+      "kind": "workflow-trace",
+      "sourceReferences": ["python/packages/core/tests/workflow/test_runner.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-004",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Checkpoint storage / resume", "Workflow events"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-004-checkpoint-resume.json",
+      "kind": "workflow-trace",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests/CheckpointResumeTests.cs", "python/packages/core/tests/workflow/test_checkpoint.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-005",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Checkpoint storage / resume"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-005-checkpoint-envelope.json",
+      "kind": "workflow-checkpoint",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-001",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": [
+        "OpenAI Responses and embeddings",
+        "Azure OpenAI Responses, embeddings, identity, and service-version modes"
+      ],
+      "fixture": "conformance/v1/providers/jcf-providers-001-openai.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Hosting.OpenAI.UnitTests/ConformanceTestBase.cs", "python/packages/openai/tests/openai"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-002",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Foundry / Azure AI"],
+      "fixture": "conformance/v1/providers/jcf-providers-002-foundry.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Foundry.UnitTests", "python/packages/foundry"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-003",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Anthropic"],
+      "fixture": "conformance/v1/providers/jcf-providers-003-anthropic.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Anthropic.UnitTests", "python/packages/anthropic"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-004",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["AWS Bedrock"],
+      "fixture": "conformance/v1/providers/jcf-providers-004-bedrock.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/bedrock", "software.amazon.awssdk:bedrockruntime:2.51.3"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-005",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Gemini"],
+      "fixture": "conformance/v1/providers/jcf-providers-005-gemini.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/gemini", "com.google.genai:google-genai:1.65.0"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-006",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Mistral"],
+      "fixture": "conformance/v1/providers/jcf-providers-006-mistral.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/mistral", "https://docs.mistral.ai/api/"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-007",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Ollama"],
+      "fixture": "conformance/v1/providers/jcf-providers-007-ollama.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/ollama", "https://docs.ollama.com/api/chat"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-008",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Foundry Local"],
+      "fixture": "conformance/v1/providers/jcf-providers-008-foundry-local.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/foundry_local", "https://learn.microsoft.com/azure/foundry-local/reference/reference-rest"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-009",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Azure AI Persistent (OpenAI Assistants)"],
+      "fixture": "conformance/v1/providers/jcf-providers-009-azure-ai-persistent.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.AzureAI.Persistent.UnitTests", "com.azure:azure-ai-agents-persistent:1.0.0-beta.2"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-010",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["GitHub Copilot"],
+      "fixture": "conformance/v1/providers/jcf-providers-010-github-copilot.json",
+      "kind": "contract",
+      "sourceReferences": ["github/copilot-sdk java/v1.0.9", "dotnet/tests/Microsoft.Agents.AI.GitHub.Copilot.UnitTests", "python/packages/github_copilot/tests"]
+    },
+    {
+      "caseId": "JCF-PROVIDERS-011",
+      "suiteId": "JCF-PROVIDERS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Copilot Studio"],
+      "fixture": "conformance/v1/providers/jcf-providers-011-copilotstudio.json",
+      "kind": "contract",
+      "sourceReferences": ["microsoft/Agents-for-python microsoft-agents-copilotstudio-client 1.3.0", "dotnet/src/Microsoft.Agents.AI.CopilotStudio", "python/packages/copilotstudio/tests"]
+    },
+    {
+      "caseId": "JCF-HOSTING-001",
+      "suiteId": "JCF-HOSTING",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Integration test harness"],
+      "fixture": "conformance/v1/hosting/jcf-hosting-001-harness.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/specs/002-python-hosting-channels.md", "docs/specs/003-dotnet-hosting-protocol-helpers.md"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-001",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["MCP tools (client)"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-001-mcp-client.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/core/tests/core/test_mcp.py", "dotnet/tests/Microsoft.Agents.AI.Mcp.UnitTests"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-002",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["MCP hosting"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-002-mcp-hosting.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/hosting-mcp/tests/hosting_mcp", "dotnet/samples/02-agents/ModelContextProtocol"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-003",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["A2A client / protocol"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-003-a2a-client.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/a2a/tests", "dotnet/tests/Microsoft.Agents.AI.A2A.UnitTests", "https://a2a-protocol.org/v1.0.1/specification/"]
+    },
+    {
+      "caseId": "JCF-PROTOCOLS-004",
+      "suiteId": "JCF-PROTOCOLS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["AG-UI hosting"],
+      "fixture": "conformance/v1/protocols/jcf-protocols-004-agui.json",
+      "kind": "contract",
+      "sourceReferences": ["@ag-ui/core@0.0.57", "@ag-ui/encoder@0.0.57", "AGUI.Abstractions@0.0.5"]
+    },
+    {
+      "caseId": "JCF-HOSTING-002",
+      "suiteId": "JCF-HOSTING",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["A2A hosting"],
+      "fixture": "conformance/v1/hosting/jcf-hosting-002-a2a.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/hosting-a2a/tests", "dotnet/tests/Microsoft.Agents.AI.Hosting.A2A.UnitTests"]
+    },
+    {
+      "caseId": "JCF-HOSTING-003",
+      "suiteId": "JCF-HOSTING",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["AG-UI hosting"],
+      "fixture": "conformance/v1/hosting/jcf-hosting-003-agui.json",
+      "kind": "contract",
+      "sourceReferences": ["java/agent-framework-hosting-agui/src/test", "java/agent-framework-hosting-agui-spring/src/test", "dotnet/tests/Microsoft.Agents.AI.Hosting.AGUI.AspNetCore.IntegrationTests"]
+    },
+    {
+      "caseId": "JCF-HOSTING-TRANSPORT-001",
+      "suiteId": "JCF-HOSTING-TRANSPORT",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Hosting abstractions", "Generic HTTP / SSE / WebSocket hosting"],
+      "fixture": "conformance/v1/hosting/jcf-hosting-transport-001-generic-http.json",
+      "kind": "contract",
+      "sourceReferences": ["java/agent-framework-hosting-http/src/test", "python/packages/hosting", "dotnet/src/Microsoft.Agents.AI.Hosting.AspNetCore"]
+    },
+    {
+      "caseId": "JCF-HOSTING-004",
+      "suiteId": "JCF-HOSTING",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Foundry hosting / session"],
+      "fixture": "conformance/v1/hosting/jcf-hosting-004-foundry.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/foundry_hosting", "dotnet/tests/Microsoft.Agents.AI.Foundry.Hosting.UnitTests"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-001",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Azure Content Understanding"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-001-content-understanding.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/azure-contentunderstanding", "com.azure:azure-ai-contentunderstanding:1.0.0"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-002",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Purview data governance"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-002-purview.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/purview", "dotnet/tests/Microsoft.Agents.AI.Purview.UnitTests", "https://learn.microsoft.com/purview/developer/use-the-api"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-003",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Foundry evals integration"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-003-foundry-evaluations.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Foundry.UnitTests/FoundryEvalsTests.cs", "com.azure:azure-ai-projects:2.3.0"]
+    },
+    {
+      "caseId": "JCF-SESSIONS-004",
+      "suiteId": "JCF-SESSIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Cosmos NoSQL history"],
+      "fixture": "conformance/v1/sessions/jcf-sessions-004-cosmos-storage.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.CosmosNoSql.UnitTests", "python/packages/azure-cosmos", "com.azure:azure-cosmos:4.81.0"]
+    },
+    {
+      "caseId": "JCF-SESSIONS-005",
+      "suiteId": "JCF-SESSIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Redis / Valkey history"],
+      "fixture": "conformance/v1/sessions/jcf-sessions-005-valkey-history.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/tests/Microsoft.Agents.AI.Valkey.UnitTests/ValkeyChatHistoryProviderTests.cs", "python/packages/redis/agent_framework_redis/_history_provider.py", "io.valkey:valkey-glide:2.5.1"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-006",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Checkpoint storage / resume", "Cosmos NoSQL history"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-006-cosmos-checkpoint.json",
+      "kind": "contract",
+      "sourceReferences": ["docs/decisions/0038-java-state-serialization-and-compatibility.md", "dotnet/src/Microsoft.Agents.AI.CosmosNoSql/CosmosCheckpointStore.cs", "python/packages/azure-cosmos"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-007",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Visualization"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-007-visualization.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Workflows/Visualization/WorkflowVisualizer.cs", "python/packages/core/agent_framework/_workflows/_viz.py"]
+    },
+    {
+      "caseId": "JCF-WORKFLOWS-008",
+      "suiteId": "JCF-WORKFLOWS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Functional workflow", "Workflow events"],
+      "fixture": "conformance/v1/workflows/jcf-workflows-008-functional-workflow.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/core/agent_framework/_workflows/_functional.py", "docs/decisions/0039-java-functional-workflow-runtime.md"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-004",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Azure Cosmos memory"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-004-cosmos-memory.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/azure-cosmos-memory", "https://learn.microsoft.com/azure/cosmos-db/gen-ai/hybrid-search", "com.azure:azure-cosmos:4.81.0"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-005",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Mem0 memory"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-005-mem0.json",
+      "kind": "contract",
+      "sourceReferences": ["dotnet/src/Microsoft.Agents.AI.Mem0", "python/packages/mem0", "https://docs.mem0.ai/openapi.json"]
+    },
+    {
+      "caseId": "JCF-INTEGRATIONS-006",
+      "suiteId": "JCF-INTEGRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Azure AI Search (RAG)"],
+      "fixture": "conformance/v1/integrations/jcf-integrations-006-azure-ai-search.json",
+      "kind": "contract",
+      "sourceReferences": ["python/packages/azure-ai-search", "com.azure:azure-search-documents:12.0.1", "https://learn.microsoft.com/azure/search/retrieval-augmented-generation-overview"]
+    },
+    {
+      "caseId": "JCF-ORCHESTRATIONS-001",
+      "suiteId": "JCF-ORCHESTRATIONS",
+      "matrixStatus": "initial-scope",
+      "matrixAreas": ["Sequential / concurrent / handoff / group chat / Magentic", "Orchestrations"],
+      "fixture": "conformance/v1/orchestrations/jcf-orchestrations-001-patterns.json",
+      "kind": "contract",
+      "sourceReferences": ["java/agent-framework-orchestrations/src/test", "python/packages/core/tests/orchestrations", "dotnet/tests/Microsoft.Agents.AI.Workflows.UnitTests"]
+    }
+  ]
+}

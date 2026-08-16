@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-001",
+  "kind": "contract",
+  "description": "Tool capabilities and tool mode normalize deterministically without provider SDK types.",
+  "input": {
+    "tools": [
+      {"name": "lookup", "capabilities": ["function"], "approvalMode": "neverRequire"},
+      {"name": "write", "capabilities": ["function"], "approvalMode": "alwaysRequire"}
+    ],
+    "toolMode": "auto"
+  },
+  "expected": {
+    "normalizedNames": ["lookup", "write"],
+    "duplicateNamesRejected": true,
+    "toolMode": "auto",
+    "providerTypesExposed": false
+  }
+}

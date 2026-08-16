@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TELEMETRY-002",
+  "kind": "contract",
+  "description": "Java user-agent telemetry uses a live monotonic 128-bit feature mask and emits it only to approved HTTPS origins.",
+  "input": {
+    "registryVersion": 1,
+    "width": 128,
+    "marks": [0, 0, 2, 127],
+    "invalidIndexes": [-1, 128],
+    "frameworkVersion": "1.2.3",
+    "prefixes": ["outer", "foundry-hosting", "outer"],
+    "existingUserAgent": "sdk-java/4.50.0",
+    "staleUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 (custom=value) (feat=v1.1)",
+    "approvedOrigin": "https://resource.openai.azure.com/openai/v1/responses",
+    "deniedOrigin": "https://gateway.example.com/openai/v1/responses",
+    "approvedOriginSuffixes": [
+      "cognitiveservices.azure.com",
+      "openai.azure.com",
+      "services.ai.azure.com"
+    ]
+  },
+  "expected": {
+    "featureToken": "v1.80000000000000000000000000000005",
+    "concurrentFeatureToken": "v1.ffffffffffffffffffffffffffffffff",
+    "prefixedUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3",
+    "prependedUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 sdk-java/4.50.0",
+    "refreshedUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 (custom=value) (feat=v1.80000000000000000000000000000005)",
+    "approvedOriginUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 (custom=value) (feat=v1.80000000000000000000000000000005)",
+    "deniedOriginUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 (custom=value)",
+    "disabledUserAgent": "foundry-hosting/outer/agent-framework-java/1.2.3 (custom=value)",
+    "duplicateMarksDeduplicated": true,
+    "invalidIndexesRejected": true,
+    "featureTokenLiveAtRequestTime": true,
+    "approvedOriginRequired": true,
+    "baseUserAgentPreservedWhenMaskDisabled": true,
+    "threadSafe": true
+  }
+}

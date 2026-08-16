@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HOSTING-003",
+  "kind": "contract",
+  "description": "AG-UI hosting reuses generic dispatch, principal isolation, limits, cancellation, and one-time process-local continuations.",
+  "input": {
+    "defaultPath": "/ag-ui",
+    "requestMediaType": "application/json",
+    "responseMediaType": "text/event-stream",
+    "routeKinds": ["agent", "workflow", "orchestration"],
+    "springAdapter": "optional-webflux-netty",
+    "capabilityDocument": "microsoft-agent-framework-extension"
+  },
+  "expected": {
+    "threadIdIsAuthorization": false,
+    "principalAndIsolationBound": true,
+    "threadStoreCasBoundedAndExpiring": true,
+    "sameThreadConcurrentPolicy": "reject",
+    "opaqueOneTimeResume": true,
+    "crossPrincipalResumeRejected": true,
+    "crossProcessResumeClaimed": false,
+    "disconnectCancellation": true,
+    "directTlsTerminationClaimed": false,
+    "springGlobalSecurityOrCorsMutation": false,
+    "springEmbeddedTomcatPresent": false
+  }
+}

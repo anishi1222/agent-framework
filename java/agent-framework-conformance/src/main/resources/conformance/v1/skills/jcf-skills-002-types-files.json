@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SKILLS-002",
+  "kind": "contract",
+  "description": "Inline, class-defined, and filesystem skills expose immutable metadata, bounded resources, and explicitly configured scripts without path escape.",
+  "input": {
+    "directoryName": "file-skill",
+    "frontmatterName": "file-skill",
+    "resourcePath": "references/guide.md",
+    "scriptPath": "scripts/run.py",
+    "searchDepth": 2,
+    "resourceExtensions": [".md", ".json", ".yaml", ".yml", ".csv", ".xml", ".txt"],
+    "scriptExtensions": [".py"]
+  },
+  "expected": {
+    "inlineContentDeterministic": true,
+    "classSnapshotImmutable": true,
+    "fileSkillDiscovered": true,
+    "directoryNameRequired": true,
+    "resourceReadable": true,
+    "scriptRunnable": true,
+    "lookupCaseInsensitive": true,
+    "traversalRejected": true,
+    "symlinksSkipped": true
+  }
+}

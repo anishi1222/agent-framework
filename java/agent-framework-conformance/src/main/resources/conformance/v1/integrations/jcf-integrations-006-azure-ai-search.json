@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-006",
+  "kind": "contract",
+  "description": "Azure AI Search performs read-only tenant-scoped lexical, vector, semantic, and existing-knowledge-base retrieval with bounded untrusted context injection.",
+  "input": {
+    "sdk": "com.azure:azure-search-documents:12.0.1",
+    "serviceApiVersion": "2026-04-01",
+    "searchPath": "POST /indexes('{indexName}')/docs/search.post.search",
+    "agenticPath": "POST /knowledgebases('{knowledgeBaseName}')/retrieve",
+    "queryModes": ["full-text", "vector", "hybrid", "semantic", "semantic-hybrid", "agentic"],
+    "authentication": ["azure-rbac", "api-key"],
+    "filterModel": "mandatory-tenant-and-scope-pre-filter"
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "sdkTypesPubliclyExposed": false,
+    "contextProviderNotMemoryStore": true,
+    "explicitScopeRequired": true,
+    "tenantScopeFilterCannotBeOverridden": true,
+    "staticFilterOnlyNarrows": true,
+    "vectorPreFilter": true,
+    "semanticHybridMinimumCandidates": 50,
+    "indexSchemaValidated": true,
+    "existingKnowledgeBaseOnly": true,
+    "knowledgeBaseSourcesSearchIndexOnly": true,
+    "sourceFilterAddOnEverySource": true,
+    "serverSideVectorizationValidated": true,
+    "clientEmbeddingDimensionValidated": true,
+    "captionsPreferred": true,
+    "agenticSourceDataPreferred": true,
+    "retrievedContentUntrusted": true,
+    "citationsPresent": true,
+    "cancellationAndDeadlineBounded": true,
+    "continuePolicyTransientOnly": true,
+    "sideEffectingDocumentApisExposed": false
+  }
+}

@@ -1,0 +1,1 @@
+{"format":"agent-framework-java-state","documentKind":"workflow-checkpoint","payloadVersion":1,"payload":{"workflowId":"valid-workflow","checkpointId":"valid-checkpoint","revision":1,"previousCheckpointId":null,"status":"inputRequired","bufferedInputs":[{"sourceId":"source","targetId":"target","value":"value"}],"pendingExecutors":["executor"]}}

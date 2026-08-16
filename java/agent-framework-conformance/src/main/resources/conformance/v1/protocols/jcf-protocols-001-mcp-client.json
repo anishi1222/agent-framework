@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROTOCOLS-001",
+  "kind": "contract",
+  "description": "The MCP client preserves negotiated capabilities, cursor pages, rich and structured content, call correlation, and explicit lifecycle ownership.",
+  "input": {
+    "transports": ["stdio", "streamableHttp"],
+    "remoteToolNames": ["docs search", "docs/search"],
+    "contentKinds": ["text", "image", "audio", "embeddedResource", "resourceLink"],
+    "cursor": "opaque-next",
+    "progressToken": "call-123"
+  },
+  "expected": {
+    "sdkTypesInPublicApi": false,
+    "normalizedToolNamesUnique": true,
+    "exactRemoteNamesUsedForDispatch": true,
+    "structuredContentPreserved": true,
+    "cursorTraversalBounded": true,
+    "childProcessOwnedAndClosed": true,
+    "remoteToolApprovalRequiredByDefault": true
+  }
+}

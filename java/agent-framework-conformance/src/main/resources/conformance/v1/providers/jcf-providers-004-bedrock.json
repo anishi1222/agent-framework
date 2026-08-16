@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-004",
+  "kind": "contract",
+  "description": "Bedrock Converse preserves framework multimodal, tool, usage, streaming, error, and cancellation semantics.",
+  "input": {
+    "request": {
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "tools": [{"name": "lookup"}],
+      "stream": true
+    },
+    "provider": "bedrock"
+  },
+  "expected": {
+    "requestRoleOrder": ["user"],
+    "toolNames": ["lookup"],
+    "finiteResponseMapped": true,
+    "streamingUpdatesAggregate": true,
+    "fragmentedToolCallsAssembled": true,
+    "usageFinishIdentifiersMapped": true,
+    "typedErrorsPreserved": true,
+    "cancellationPropagated": true,
+    "providerTypesInSharedApi": false,
+    "capabilities": {"text": true, "images": true, "documents": true, "audio": true, "structuredOutput": true},
+    "limitations": ["developer role", "remote media URI", "model-dependent structured output"]
+  }
+}

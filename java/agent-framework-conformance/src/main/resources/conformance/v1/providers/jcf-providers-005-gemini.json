@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-005",
+  "kind": "contract",
+  "description": "Gemini preserves framework multimodal, tool, grounding, safety, usage, streaming, error, and cancellation semantics.",
+  "input": {
+    "request": {
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "tools": [{"name": "lookup"}],
+      "stream": true
+    },
+    "provider": "gemini"
+  },
+  "expected": {
+    "requestRoleOrder": ["user"],
+    "toolNames": ["lookup"],
+    "finiteResponseMapped": true,
+    "streamingUpdatesAggregate": true,
+    "fragmentedToolCallsAssembled": true,
+    "usageFinishIdentifiersMapped": true,
+    "typedErrorsPreserved": true,
+    "cancellationPropagated": true,
+    "providerTypesInSharedApi": false,
+    "capabilities": {"text": true, "images": true, "documents": true, "audio": true, "structuredOutput": true},
+    "limitations": ["developer role", "caller-selected parallel tool-call preference"]
+  }
+}

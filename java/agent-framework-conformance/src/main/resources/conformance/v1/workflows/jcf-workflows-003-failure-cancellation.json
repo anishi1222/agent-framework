@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-003",
+  "kind": "workflow-trace",
+  "description": "Branch failure cancels remaining work and emits one failed terminal event without output.",
+  "events": [
+    {"sequence": 0, "type": "fanOut", "targetIds": ["slow", "failing"]},
+    {"sequence": 1, "type": "executorInvoked", "executorId": "slow"},
+    {"sequence": 2, "type": "executorInvoked", "executorId": "failing"},
+    {"sequence": 3, "type": "executorFailed", "executorId": "failing", "errorType": "WorkflowException"},
+    {"sequence": 4, "type": "cancellationRequested", "executorId": "slow"},
+    {"sequence": 5, "type": "executorCancelled", "executorId": "slow"},
+    {"sequence": 6, "type": "terminal", "outcome": "failed"}
+  ],
+  "expected": {
+    "failedExecutor": "failing",
+    "cancelledExecutors": ["slow"],
+    "outputs": [],
+    "terminalCount": 1,
+    "terminalOutcome": "failed",
+    "successAfterTerminal": false
+  }
+}

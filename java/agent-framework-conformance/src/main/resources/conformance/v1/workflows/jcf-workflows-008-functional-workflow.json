@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-008",
+  "kind": "contract",
+  "description": "Functional workflows replay typed step results, preserve deterministic HITL request identifiers, chain checkpoints, and resume on another Java workflow instance.",
+  "input": {
+    "workflowId": "functional-hitl",
+    "signatureVersion": "1",
+    "checkpointKey": "functional-hitl",
+    "steps": ["first-review", "second-review"],
+    "responses": [
+      {"requestId": "auto::0", "value": "approved"},
+      {"requestId": "auto::1", "value": "published"}
+    ]
+  },
+  "expected": {
+    "firstPendingRequest": "auto::0",
+    "secondPendingRequest": "auto::1",
+    "finalOutput": "draft-approved-published",
+    "completedStepBypassed": true,
+    "autoRequestIdsStable": true,
+    "multipleRequestsPerStepResume": true,
+    "userStateRestored": true,
+    "checkpointParentChained": true,
+    "checkpointResumeAcrossInstances": true,
+    "terminalCountPerInvocation": 1,
+    "concurrentRunRejected": true,
+    "agentInputMapped": true,
+    "agentOutputMapped": true,
+    "agentRequestSurfaced": true,
+    "agentResponseResumed": true,
+    "agentStreamingMapped": true,
+    "crossLanguageWireCompatible": false
+  }
+}

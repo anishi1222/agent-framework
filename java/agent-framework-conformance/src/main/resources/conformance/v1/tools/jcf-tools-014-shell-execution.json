@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-014",
+  "kind": "contract",
+  "description": "Shell execution is approval-gated, cancellation-aware, output-bounded, stateful when requested, and container-isolated by restrictive defaults.",
+  "input": {
+    "localDefaults": {
+      "mode": "persistent",
+      "timeoutSeconds": 30,
+      "maxOutputBytes": 65536,
+      "approvalMode": "alwaysRequire"
+    },
+    "dockerDefaults": {
+      "network": "none",
+      "memoryBytes": 536870912,
+      "pidsLimit": 256,
+      "user": "65534:65534",
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noNewPrivileges": true
+    },
+    "environmentProvider": {
+      "sourceId": "shell_environment",
+      "probeTools": [
+        "git",
+        "dotnet",
+        "node",
+        "python",
+        "docker"
+      ],
+      "probeTimeoutSeconds": 5
+    }
+  },
+  "expected": {
+    "toolCapabilities": [
+      "function",
+      "shell"
+    ],
+    "timeoutExitCode": 124,
+    "statelessExitCodePropagated": true,
+    "persistentStatePreserved": true,
+    "headTailOutputBounded": true,
+    "approvalRequiredByDefault": true,
+    "hostOptOutRequiresAcknowledgement": true,
+    "containerOptOutExplicit": true,
+    "cancellationPropagated": true,
+    "policyDenyFirst": true,
+    "commandArgumentsNotRetokenized": true,
+    "environmentInstructionsCached": true
+  }
+}

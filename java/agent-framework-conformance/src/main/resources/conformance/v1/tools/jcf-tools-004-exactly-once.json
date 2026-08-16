@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-004",
+  "kind": "tool-loop",
+  "description": "A duplicate call occurrence within one uninterrupted logical run does not repeat the side effect.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-once", "invocationId": "run-004:call-once"},
+    {"sequence": 1, "type": "toolInvoked", "invocationId": "run-004:call-once"},
+    {"sequence": 2, "type": "functionResult", "callId": "call-once", "result": "done"},
+    {"sequence": 3, "type": "replayedFunctionCall", "callId": "call-once", "invocationId": "run-004:call-once"},
+    {"sequence": 4, "type": "replayRejected", "callId": "call-once", "reason": "terminalOutcomeAlreadyRecorded"},
+    {"sequence": 5, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "logicalRunId": "run-004",
+    "invocationCount": 1,
+    "functionResultCount": 1,
+    "externalExactlyOnceAfterCrashClaimed": false,
+    "terminalCount": 1
+  }
+}

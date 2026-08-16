@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TELEMETRY-001",
+  "kind": "contract",
+  "description": "Java feature-stage annotations retain stage-scoped identifiers at runtime and support one warning per stage and feature.",
+  "input": {
+    "annotations": ["Experimental", "ReleaseCandidate"],
+    "experimentalFeatureIds": [
+      "DECLARATIVE_AGENTS",
+      "EVALS",
+      "FILE_HISTORY",
+      "FIDES",
+      "FOUNDRY_TOOLS",
+      "FOUNDRY_PREVIEW_TOOLS",
+      "FUNCTIONAL_WORKFLOWS",
+      "HARNESS",
+      "MCP_LONG_RUNNING_TASKS",
+      "MCP_SKILLS",
+      "PROGRESSIVE_TOOLS",
+      "SESSION_STORE",
+      "TO_PROMPT_AGENT"
+    ]
+  },
+  "expected": {
+    "runtimeRetention": true,
+    "lifecycleTargetsPresent": true,
+    "featureIdsMatch": true,
+    "stageMetadataDiscoverable": true,
+    "inheritedTypeMetadata": true,
+    "warningDeduplicated": true,
+    "conflictingStagesRejected": true,
+    "releaseCandidateInventoryEmpty": true
+  }
+}

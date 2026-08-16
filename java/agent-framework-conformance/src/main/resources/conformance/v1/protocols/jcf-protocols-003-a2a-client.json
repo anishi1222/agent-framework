@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROTOCOLS-003",
+  "kind": "contract",
+  "description": "The A2A v1 client owns its public model, validates bounded JSON-RPC and SSE, preserves continuation and multimodal content, and interoperates with the official Java SDK.",
+  "input": {
+    "protocolRelease": "v1.0.1",
+    "protocolVersion": "1.0",
+    "officialJavaSdk": "org.a2aproject.sdk:1.2.0.Final",
+    "binding": "JSONRPC",
+    "jsonRpcMediaType": "application/json",
+    "operations": ["cards", "send", "stream", "get", "list", "cancel", "subscribe", "pushCrud"],
+    "contentKinds": ["text", "fileBytes", "fileUri", "data"]
+  },
+  "expected": {
+    "frameworkOwnedPublicTypes": true,
+    "sdkTypesInPublicApi": false,
+    "officialSdkBidirectionalInterop": true,
+    "boundedJsonAndSse": true,
+    "explicitRunHandleCancellation": true,
+    "protocolErrorsNeverSuccess": true,
+    "lastEventIdReplayClaimed": false
+  }
+}

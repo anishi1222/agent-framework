@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CONTEXT-001",
+  "kind": "contract",
+  "description": "Immutable compaction keeps tool groups atomic, summarizes bounded old results, composes token budgets, and protects required preamble content.",
+  "input": {
+    "keepLastToolCallGroups": 1,
+    "toolGroups": [
+      {
+        "callId": "old",
+        "name": "weather",
+        "result": "sunny",
+        "callMessageId": "old-call",
+        "resultMessageId": "old-result"
+      },
+      {
+        "callId": "middle",
+        "name": "search",
+        "result": "three documents",
+        "callMessageId": "middle-call",
+        "resultMessageId": "middle-result"
+      },
+      {
+        "callId": "recent",
+        "name": "calendar",
+        "result": "booked",
+        "callMessageId": "recent-call",
+        "resultMessageId": "recent-result"
+      }
+    ],
+    "contextWindow": {
+      "maxContextWindowTokens": 100,
+      "maxOutputTokens": 0,
+      "toolEvictionThreshold": 0.5,
+      "truncationThreshold": 0.8
+    }
+  },
+  "expected": {
+    "selectiveMessageIds": [
+      "user",
+      "recent-call",
+      "recent-result",
+      "done"
+    ],
+    "toolSummaryTexts": [
+      "[Tool results: weather: sunny]",
+      "[Tool results: search: three documents]"
+    ],
+    "toolSummarySourceIds": [
+      "old-call",
+      "old-result",
+      "middle-call",
+      "middle-result"
+    ],
+    "contextWindowSummaryCount": 2,
+    "contextWindowRetainedCallIds": [
+      "recent"
+    ],
+    "atomicFallbackMessageIds": [
+      "latest"
+    ],
+    "multipleSummaryIdsExposed": true,
+    "resolvedPreambleProtected": true,
+    "composedEarlyStop": true,
+    "deterministic": true
+  }
+}

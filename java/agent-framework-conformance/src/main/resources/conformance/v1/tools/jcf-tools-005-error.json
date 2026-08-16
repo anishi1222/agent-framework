@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-005",
+  "kind": "tool-loop",
+  "description": "A tool failure produces one correlated terminal result and one invocation.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-error", "name": "fail"},
+    {"sequence": 1, "type": "toolInvoked", "callId": "call-error"},
+    {"sequence": 2, "type": "toolFailed", "callId": "call-error", "errorType": "ToolExecutionError"},
+    {"sequence": 3, "type": "functionResult", "callId": "call-error", "isError": true, "result": "Error: Function failed."},
+    {"sequence": 4, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "invocationCount": 1,
+    "functionResultCount": 1,
+    "resultCallId": "call-error",
+    "detailLeakage": false,
+    "orphanCalls": 0
+  }
+}

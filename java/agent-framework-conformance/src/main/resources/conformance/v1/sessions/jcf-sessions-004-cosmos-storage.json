@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SESSIONS-004",
+  "kind": "contract",
+  "description": "Cosmos session and history storage is tenant-partitioned, ETag-CAS safe, retry-idempotent, and versioned.",
+  "input": {
+    "sdk": "com.azure:azure-cosmos:4.81.0",
+    "partitionKeyPath": "/partitionKey",
+    "authentication": ["rbac", "redacted-account-key"],
+    "documentKinds": ["agent-session", "history-head", "history-message"]
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "etagCas": true,
+    "monotonicSoftDeleteRevision": true,
+    "exactlyOnceMessageIds": true,
+    "pointReadsPartitionBound": true,
+    "crossPartitionScanDefault": false,
+    "payloadVersioned": true,
+    "unknownFutureVersionRejected": true,
+    "diagnosticsSanitized": true
+  }
+}

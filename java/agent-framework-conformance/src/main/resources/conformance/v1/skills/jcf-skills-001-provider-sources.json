@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SKILLS-001",
+  "kind": "contract",
+  "description": "Skill sources compose deterministically and the provider advertises approval-gated load, resource, and script tools without caching caller-owned sources.",
+  "input": {
+    "skillNames": ["zeta", "alpha", "alpha"],
+    "providerToolNames": ["load_skill", "read_skill_resource", "run_skill_script"],
+    "approvalMode": "alwaysRequire",
+    "resourceName": "guide",
+    "scriptName": "echo"
+  },
+  "expected": {
+    "advertisedSkillNames": ["alpha", "zeta"],
+    "providerToolNames": ["load_skill", "read_skill_resource", "run_skill_script"],
+    "duplicateNamesRemoved": true,
+    "descriptionsXmlEscaped": true,
+    "loadReturnsInstructions": true,
+    "resourceLookupCaseInsensitive": true,
+    "scriptLookupCaseInsensitive": true,
+    "approvalRequiredByDefault": true,
+    "callerSourceAutoCached": false
+  }
+}

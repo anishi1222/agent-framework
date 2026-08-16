@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SESSIONS-005",
+  "kind": "contract",
+  "description": "Valkey history is tenant-isolated, bounded, versioned, atomic, retry-idempotent, and cancellation-aware.",
+  "input": {
+    "sdk": "io.valkey:valkey-glide:2.5.1",
+    "topology": "standalone",
+    "keyStructures": ["messages-list", "dedup-hash", "dedup-order-list"],
+    "documentKind": "history-message",
+    "appendPrimitive": "same-slot-lua"
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "identifiersHashed": true,
+    "hashSlotStable": true,
+    "appendAtomic": true,
+    "replayIdempotent": true,
+    "conflictingDigestRejected": true,
+    "retainedMessagesBounded": true,
+    "dedupMetadataBounded": true,
+    "ttlRefreshedAtomically": true,
+    "corruptEntriesRejected": true,
+    "cancellationAndDeadlineBounded": true,
+    "externalClientCallerOwned": true,
+    "crossLanguageWireCompatibilityClaimed": false
+  }
+}

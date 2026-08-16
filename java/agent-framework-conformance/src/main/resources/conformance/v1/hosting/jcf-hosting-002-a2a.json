@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HOSTING-002",
+  "kind": "contract",
+  "description": "A2A hosting maps Agents and Workflows to principal-isolated tasks, ordered status/artifact events, and a loopback-first bounded JSON-RPC/SSE host.",
+  "input": {
+    "adapters": ["agent", "workflow"],
+    "operations": ["send", "stream", "get", "list", "cancel", "subscribe", "pushCrud"],
+    "taskStates": ["submitted", "working", "inputRequired", "authRequired", "completed", "failed", "canceled", "rejected"],
+    "storeDimensions": ["principalId", "isolationKey", "taskId"],
+    "transport": "embeddedJsonRpcSse"
+  },
+  "expected": {
+    "taskIdAuthorizes": false,
+    "currentTaskFirstOnResubscribe": true,
+    "artifactAppendAndLastChunk": true,
+    "inputAndAuthBoundaries": true,
+    "hostAndOriginValidated": true,
+    "pushStored": true,
+    "outboundPushDispatched": false,
+    "crossLanguageStateClaimed": false
+  }
+}

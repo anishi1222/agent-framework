@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-001",
+  "kind": "contract",
+  "description": "Content Understanding uses the stable Java SDK with safe URL and byte inputs and bounded LRO behavior.",
+  "input": {
+    "sdk": "com.azure:azure-ai-contentunderstanding:1.0.0",
+    "serviceApiVersion": "2025-11-01",
+    "service": "Azure AI Content Understanding",
+    "inputs": ["https-url", "bytes"]
+  },
+  "expected": {
+    "documentIntelligenceConflated": false,
+    "frameworkOwnedPublicApi": true,
+    "querySecretsRedacted": true,
+    "localUrlTargetsRejected": true,
+    "payloadsAndPagesBounded": true,
+    "pollingCancellationPropagated": true,
+    "remoteCancelClaimed": false,
+    "resourcesNeverAutoDeleted": true
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SESSIONS-001",
+  "kind": "session-snapshot",
+  "description": "Java session state uses its own version 1 envelope and makes no cross-language wire claim.",
+  "envelope": {
+    "format": "agent-framework-java-state",
+    "documentKind": "agent-session",
+    "payloadVersion": 1,
+    "payload": {
+      "sessionId": "session-001",
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "state": {"turn": 1}
+    }
+  },
+  "operations": [
+    {"operation": "decode", "readerVersion": 1},
+    {"operation": "encode", "writerVersion": 1}
+  ],
+  "expected": {
+    "roundTripWithinJavaV1": true,
+    "observableSessionId": "session-001",
+    "observableMessageText": "hello",
+    "crossLanguageWireCompatible": false,
+    "unknownDocumentKindRejected": true,
+    "unknownPayloadVersionRejected": true
+  }
+}

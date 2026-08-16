@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HARNESS-002",
+  "kind": "contract",
+  "description": "Background agents persist serializable task metadata, preserve child-session continuation in process, and mark orphaned running work lost after restoration.",
+  "input": {
+    "agentName": "researcher",
+    "operations": ["start", "wait", "result", "continue", "clear"],
+    "initialStatus": "RUNNING",
+    "terminalStatus": "COMPLETED",
+    "restoredMissingRuntimeStatus": "LOST"
+  },
+  "expected": {
+    "taskIdsMonotonic": true,
+    "waitReturnsCompletedTask": true,
+    "firstResult": "first-done",
+    "continuedResult": "second-done",
+    "terminalTaskClearable": true,
+    "restoredRunningBecomesLost": true,
+    "lostTaskExcludedFromIncomplete": true
+  }
+}

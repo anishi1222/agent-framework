@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-005",
+  "kind": "contract",
+  "description": "Mem0 uses explicit identity scopes, partition-safe Platform V3 add/search/list, V1 scoped clear/event operations, and untrusted context injection.",
+  "input": {
+    "transport": "jdk-http",
+    "openApi": "https://docs.mem0.ai/openapi.json",
+    "addPath": "POST /v3/memories/add/",
+    "searchPath": "POST /v3/memories/search/",
+    "listPath": "POST /v3/memories/",
+    "clearPath": "DELETE /v1/memories/",
+    "eventPath": "GET /v1/event/{event_id}/"
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "officialJavaSdkClaimed": false,
+    "contextProviderNotMemoryStore": true,
+    "explicitScopeRequired": true,
+    "batchedAdd": true,
+    "sideEffectingAddRetried": false,
+    "untrustedCitedRetrieval": true,
+    "redirectsFollowed": false,
+    "strictBoundedJson": true,
+    "cancellationAndDeadlineBounded": true,
+    "partialEventFailuresExplicit": true,
+    "partitionedUserAgentScopes": true,
+    "loopbackHttpSyntacticOnly": true,
+    "continuePolicyTransientOnly": true,
+    "unscopedItemOperationsExposed": false,
+    "unscopedDeleteAllExposed": false,
+    "historyEndpointExposed": false,
+    "universalOssParityClaimed": false
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-WORKFLOWS-004",
+  "kind": "workflow-trace",
+  "description": "Checkpoint resume restores buffered fan-in state and chains the next checkpoint to the resumed revision.",
+  "events": [
+    {"sequence": 0, "type": "fanInBuffered", "sourceId": "left", "targetId": "join", "value": "before"},
+    {"sequence": 1, "type": "checkpointSaved", "checkpointId": "checkpoint-001", "revision": 1, "previousCheckpointId": null},
+    {"sequence": 2, "type": "runInterrupted", "reason": "inputRequired"},
+    {"sequence": 3, "type": "checkpointLoaded", "checkpointId": "checkpoint-001", "revision": 1},
+    {"sequence": 4, "type": "workflowResumed", "checkpointId": "checkpoint-001"},
+    {"sequence": 5, "type": "fanInBuffered", "sourceId": "right", "targetId": "join", "value": "after"},
+    {"sequence": 6, "type": "fanInReleased", "sourceIds": ["left", "right"], "targetId": "join", "values": ["before", "after"]},
+    {"sequence": 7, "type": "checkpointSaved", "checkpointId": "checkpoint-002", "revision": 2, "previousCheckpointId": "checkpoint-001"},
+    {"sequence": 8, "type": "workflowOutput", "value": ["before", "after"]},
+    {"sequence": 9, "type": "terminal", "outcome": "idle"}
+  ],
+  "expected": {
+    "restoredCheckpointId": "checkpoint-001",
+    "nextCheckpointParent": "checkpoint-001",
+    "fanInValues": ["before", "after"],
+    "duplicateBufferedValues": 0,
+    "terminalCount": 1,
+    "crossLanguageWireCompatible": false
+  }
+}

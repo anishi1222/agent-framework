@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-005",
+  "kind": "contract",
+  "description": "Session-scoped injected messages are delivered once at the next safe model turn across finite, streaming, informational, and actionable tool paths.",
+  "input": {
+    "stateKey": "messageInjection.pendingMessages",
+    "messages": {
+      "initial": "original",
+      "prequeued": "queued before call",
+      "duringResponse": "queued during response",
+      "fromTool": "queued from tool"
+    }
+  },
+  "expected": {
+    "queueStoredInSessionState": true,
+    "prequeuedDeliveredOnce": true,
+    "nonActionableResponseTriggersNextTurn": true,
+    "informationalCallsDoNotBlock": true,
+    "actionableCallsDeferUntilToolResult": true,
+    "conversationIdPropagated": true,
+    "streamingEquivalent": true,
+    "sessionRequired": true
+  }
+}

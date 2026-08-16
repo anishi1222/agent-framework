@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-002",
+  "kind": "contract",
+  "description": "Purview is policy middleware over Microsoft Graph dataSecurityAndGovernance rather than an unrelated catalog client.",
+  "input": {
+    "graphVersion": "v1.0",
+    "operations": ["protectionScopes.compute", "processContent", "contentActivities"],
+    "hookPoints": ["agent", "chat"],
+    "executionModes": ["evaluateInline", "evaluateOffline"]
+  },
+  "expected": {
+    "promptAndFiniteResponseEnforced": true,
+    "failModeExplicit": true,
+    "etagForwarded": true,
+    "mostRestrictiveScopeWins": true,
+    "backgroundWorkBounded": true,
+    "streamingEgressLimitationExplicit": true,
+    "telemetryContainsContentOrIdentity": false,
+    "errorsSanitized": true
+  }
+}

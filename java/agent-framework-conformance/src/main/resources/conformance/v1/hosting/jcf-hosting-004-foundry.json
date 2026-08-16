@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HOSTING-004",
+  "kind": "contract",
+  "description": "Foundry hosting reuses the generic dispatcher while binding service continuation to authenticated principal isolation.",
+  "input": {
+    "executionEngine": "agent-framework-hosting",
+    "sessionPartition": ["routeId", "principalId", "isolationId", "conversationId"],
+    "continuation": "opaque-one-time-process-local",
+    "surfaces": ["responses", "persistent"]
+  },
+  "expected": {
+    "duplicateExecutionEngine": false,
+    "threadRunConversationIdsAuthorize": false,
+    "principalIsolationEnforced": true,
+    "sessionStoreBoundedAndCasAware": true,
+    "continuationsPrincipalBound": true,
+    "callerResourcesRemainCallerOwned": true,
+    "persistentStreamingLimitationExplicit": true
+  }
+}

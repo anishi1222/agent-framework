@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-010",
+  "kind": "contract",
+  "description": "GitHub Copilot uses the official stable Java SDK as the sole RPC/session/event implementation behind framework-owned public facades.",
+  "input": {
+    "sdk": "com.github:copilot-sdk-java:1.0.9",
+    "officialDocumentation": "https://github.github.io/copilot-sdk-java/latest/",
+    "canonicalSource": "https://github.com/github/copilot-sdk/tree/main/java",
+    "protocolVersionSource": "com.github.copilot.SdkProtocolVersion",
+    "minimumCliVersion": "1.0.55",
+    "transports": ["stdio", "loopback-tcp"],
+    "supportedTokenPrefixes": ["gho_", "ghu_", "github_pat_"],
+    "unsupportedTokenPrefix": "ghp_"
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "officialSdkTypesPublic": false,
+    "officialSdkOwnsProtocol": true,
+    "frameworkProtocolImplementation": false,
+    "protocolMismatchFails": true,
+    "permissionsDenyByDefault": true,
+    "classicPatSupported": false,
+    "remotePlaintextSupported": false,
+    "sessionStorageExternal": true,
+    "cancellationPropagated": true,
+    "boundedEvents": true,
+    "callerResourcesPreserved": true,
+    "mcpCommandsCallerDeclared": true
+  }
+}

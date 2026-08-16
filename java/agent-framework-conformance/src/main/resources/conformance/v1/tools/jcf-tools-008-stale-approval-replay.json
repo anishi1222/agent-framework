@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-008",
+  "kind": "tool-loop",
+  "description": "Resolved or stale approval authority is rejected and cannot replay a completed invocation.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-stale"},
+    {"sequence": 1, "type": "approvalRequested", "approvalId": "approval-stale", "callId": "call-stale"},
+    {"sequence": 2, "type": "approvalDecision", "approvalId": "approval-stale", "approved": true},
+    {"sequence": 3, "type": "toolInvoked", "callId": "call-stale"},
+    {"sequence": 4, "type": "functionResult", "callId": "call-stale", "result": "done"},
+    {"sequence": 5, "type": "replayedApprovalDecision", "approvalId": "approval-stale", "approved": true},
+    {"sequence": 6, "type": "approvalReplayRejected", "approvalId": "approval-stale", "reason": "authorityConsumed"},
+    {"sequence": 7, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "invocationCount": 1,
+    "functionCallOccurrences": 1,
+    "functionResultOccurrences": 1,
+    "staleDecisionAccepted": false,
+    "approvalControlItemsInLaterModelHistory": 0
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-004",
+  "kind": "contract",
+  "description": "Chat options and finish reason retain provider-neutral values.",
+  "input": {
+    "options": {"temperature": 0.25, "maxTokens": 128, "toolChoice": "auto"},
+    "providerFinishReason": "tool_calls"
+  },
+  "expected": {
+    "normalized": {"temperature": 0.25, "maxTokens": 128, "toolChoice": "auto"},
+    "finishReason": "toolCalls"
+  }
+}

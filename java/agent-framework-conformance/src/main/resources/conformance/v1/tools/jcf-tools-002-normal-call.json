@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-002",
+  "kind": "tool-loop",
+  "description": "One local function call produces one ordered result and a final assistant message.",
+  "events": [
+    {"sequence": 0, "type": "modelResponse", "role": "assistant"},
+    {"sequence": 1, "type": "functionCall", "callId": "call-001", "name": "lookup", "arguments": {"key": "alpha"}, "invocationId": "run-001:call-001"},
+    {"sequence": 2, "type": "toolInvoked", "invocationId": "run-001:call-001"},
+    {"sequence": 3, "type": "functionResult", "callId": "call-001", "result": {"value": 7}},
+    {"sequence": 4, "type": "assistantMessage", "text": "The value is 7."},
+    {"sequence": 5, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "invocationCount": 1,
+    "functionResultCount": 1,
+    "callResultOrder": ["call-001"],
+    "assistantText": "The value is 7.",
+    "terminalCount": 1
+  }
+}

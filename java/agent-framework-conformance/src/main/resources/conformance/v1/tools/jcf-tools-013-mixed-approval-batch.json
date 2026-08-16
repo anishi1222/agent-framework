@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-TOOLS-013",
+  "kind": "tool-loop",
+  "description": "A mixed approval batch executes only the approved body and emits one correlated terminal result per call in model order.",
+  "events": [
+    {"sequence": 0, "type": "functionCall", "callId": "call-approved", "name": "approved", "invocationId": "run-013:call-approved"},
+    {"sequence": 1, "type": "functionCall", "callId": "call-rejected", "name": "rejected", "invocationId": "run-013:call-rejected"},
+    {"sequence": 2, "type": "approvalRequested", "approvalId": "approval-approved", "callId": "call-approved"},
+    {"sequence": 3, "type": "approvalRequested", "approvalId": "approval-rejected", "callId": "call-rejected"},
+    {"sequence": 4, "type": "terminal", "outcome": "inputRequired"},
+    {"sequence": 5, "type": "approvalDecision", "approvalId": "approval-approved", "approved": true},
+    {"sequence": 6, "type": "approvalDecision", "approvalId": "approval-rejected", "approved": false},
+    {"sequence": 7, "type": "toolInvoked", "callId": "call-approved", "invocationId": "run-013:call-approved"},
+    {"sequence": 8, "type": "functionResult", "callId": "call-approved", "invocationId": "run-013:call-approved", "outcome": "succeeded", "result": "written"},
+    {"sequence": 9, "type": "functionResult", "callId": "call-rejected", "invocationId": "run-013:call-rejected", "outcome": "rejected", "result": "The tool was not executed."},
+    {"sequence": 10, "type": "terminal", "outcome": "success"}
+  ],
+  "expected": {
+    "approvedCallId": "call-approved",
+    "approvedInvocationCount": 1,
+    "rejectedCallId": "call-rejected",
+    "rejectedInvocationCount": 0,
+    "functionResultCount": 2,
+    "resultOrder": ["call-approved", "call-rejected"],
+    "resultOutcomes": ["succeeded", "rejected"],
+    "terminalCount": 2
+  }
+}

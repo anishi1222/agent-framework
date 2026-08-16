@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-009",
+  "kind": "contract",
+  "description": "Azure AI Persistent remains an isolated preview adapter with explicit service continuation and resource ownership.",
+  "input": {
+    "sdk": "com.azure:azure-ai-agents-persistent:1.0.0-beta.2",
+    "serviceApiVersion": "2025-05-15-preview",
+    "runStatuses": ["queued", "in_progress", "requires_action", "cancelling", "cancelled", "failed", "completed", "expired"],
+    "supportedTools": ["code_interpreter", "file_search", "function", "openapi"],
+    "unsupportedTools": ["mcp"]
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "sessionPersistsAgentThreadRunIds": true,
+    "stableMessageIdsDeduplicated": true,
+    "boundedScheduledPolling": true,
+    "cancellationPropagated": true,
+    "unknownStatusNeverSucceeds": true,
+    "requiresActionExplicit": true,
+    "callerResourcesNeverAutoDeleted": true
+  }
+}

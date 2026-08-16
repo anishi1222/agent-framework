@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-SKILLS-003",
+  "kind": "contract",
+  "description": "MCP skills use SEP-2640 index discovery, lazy skill documents, safe sibling resources, and bounded archive materialization while leaving templates deferred.",
+  "input": {
+    "indexUri": "skill://index.json",
+    "supportedEntryTypes": ["skill-md", "archive"],
+    "deferredEntryTypes": ["mcp-resource-template"],
+    "archiveMaxFileCount": 20,
+    "archiveMaxSizeBytes": 1048576,
+    "archiveMaxUncompressedBytes": 1048576,
+    "resourcePath": "references/guide.md"
+  },
+  "expected": {
+    "skillDocumentLazy": true,
+    "skillDocumentCachedAfterSuccess": true,
+    "missingIndexReturnsEmpty": true,
+    "malformedIndexReturnsEmpty": true,
+    "realReadErrorsPropagate": true,
+    "unknownResourceReturnsNull": true,
+    "resourceTraversalRejectedLocally": true,
+    "binaryResourcesPreserved": true,
+    "archiveMagicBytesPreferred": true,
+    "archiveTraversalContained": true,
+    "archiveLinksSkipped": true,
+    "archiveLimitsEnforced": true,
+    "staleArchivesPruned": true,
+    "concurrentReconciliationSerialized": true,
+    "archiveScriptsNeverExecutable": true,
+    "templateEntriesDeferred": true
+  }
+}

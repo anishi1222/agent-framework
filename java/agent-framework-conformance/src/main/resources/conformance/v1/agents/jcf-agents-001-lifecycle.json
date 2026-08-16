@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-AGENTS-001",
+  "kind": "contract",
+  "description": "Agent and chat-client sync, async, and streaming views share one run lifecycle.",
+  "input": {
+    "agent": {"id": "agent-001", "name": "sample"},
+    "operations": ["run", "runAsync", "runStreaming", "complete", "completeAsync", "completeStreaming"]
+  },
+  "expected": {
+    "agentContract": "interface",
+    "baseAgentOptional": true,
+    "finiteAsyncType": "CompletionStage",
+    "streamingType": "Flow.Publisher",
+    "executionCoreCountPerRun": 1
+  }
+}

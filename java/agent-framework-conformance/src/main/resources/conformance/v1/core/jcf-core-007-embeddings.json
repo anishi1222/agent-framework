@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-007",
+  "kind": "contract",
+  "description": "Provider-neutral embedding batches preserve input order, immutable finite vectors, options, usage, and cancellation.",
+  "input": {
+    "values": ["alpha", "beta", "gamma"],
+    "options": {
+      "model": "embedding-model",
+      "dimensions": 2,
+      "metadata": {"scope": "conformance"}
+    },
+    "vectors": [
+      [0.1, 0.2],
+      [0.3, 0.4],
+      [0.5, 0.6]
+    ]
+  },
+  "expected": {
+    "count": 3,
+    "dimensions": [2, 2, 2],
+    "model": "embedding-model",
+    "inputTokens": 3,
+    "orderPreserved": true,
+    "callerCollectionsUnchanged": true,
+    "invalidDimensionRejected": true,
+    "nonFiniteVectorRejected": true,
+    "cancelledRunRejected": true,
+    "providerTypesInPublicApi": false
+  }
+}

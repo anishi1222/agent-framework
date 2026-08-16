@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "limitProfiles": {
+    "structural": {
+      "maxDocumentBytes": 4096,
+      "maxNestingDepth": 32,
+      "maxStringLength": 512,
+      "maxNumericTokenLength": 64,
+      "maxCollectionEntries": 64
+    },
+    "bytes-128": {
+      "maxDocumentBytes": 128,
+      "maxNestingDepth": 32,
+      "maxStringLength": 512,
+      "maxNumericTokenLength": 64,
+      "maxCollectionEntries": 64
+    },
+    "depth-4": {
+      "maxDocumentBytes": 4096,
+      "maxNestingDepth": 4,
+      "maxStringLength": 512,
+      "maxNumericTokenLength": 64,
+      "maxCollectionEntries": 64
+    },
+    "string-32": {
+      "maxDocumentBytes": 4096,
+      "maxNestingDepth": 32,
+      "maxStringLength": 32,
+      "maxNumericTokenLength": 64,
+      "maxCollectionEntries": 64
+    },
+    "number-4": {
+      "maxDocumentBytes": 4096,
+      "maxNestingDepth": 32,
+      "maxStringLength": 512,
+      "maxNumericTokenLength": 4,
+      "maxCollectionEntries": 64
+    },
+    "collection-8": {
+      "maxDocumentBytes": 4096,
+      "maxNestingDepth": 32,
+      "maxStringLength": 512,
+      "maxNumericTokenLength": 64,
+      "maxCollectionEntries": 8
+    }
+  },
+  "positiveControls": [
+    {
+      "controlId": "JCF-POSITIVE-SESSIONS-001",
+      "documentKind": "agent-session",
+      "resource": "conformance/rejections/v1/valid/agent-session.json",
+      "limitProfile": "structural"
+    },
+    {
+      "controlId": "JCF-POSITIVE-WORKFLOWS-001",
+      "documentKind": "workflow-checkpoint",
+      "resource": "conformance/rejections/v1/valid/workflow-checkpoint.json",
+      "limitProfile": "structural"
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-001",
+      "documentKind": "agent-session",
+      "reason": "duplicate-key",
+      "resource": "conformance/rejections/v1/sessions/duplicate-key.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-002",
+      "documentKind": "agent-session",
+      "reason": "document-bytes",
+      "resource": "conformance/rejections/v1/sessions/document-bytes.json",
+      "limitProfile": "bytes-128"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-003",
+      "documentKind": "agent-session",
+      "reason": "nesting-depth",
+      "resource": "conformance/rejections/v1/sessions/nesting-depth.json",
+      "limitProfile": "depth-4"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-004",
+      "documentKind": "agent-session",
+      "reason": "string-length",
+      "resource": "conformance/rejections/v1/sessions/string-length.json",
+      "limitProfile": "string-32"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-005",
+      "documentKind": "agent-session",
+      "reason": "numeric-token-length",
+      "resource": "conformance/rejections/v1/sessions/numeric-token-length.json",
+      "limitProfile": "number-4"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-006",
+      "documentKind": "agent-session",
+      "reason": "collection-entries",
+      "resource": "conformance/rejections/v1/sessions/collection-entries.json",
+      "limitProfile": "collection-8"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-007",
+      "documentKind": "agent-session",
+      "reason": "non-finite-number",
+      "resource": "conformance/rejections/v1/sessions/non-finite-number.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-008",
+      "documentKind": "agent-session",
+      "reason": "wrong-document-kind",
+      "resource": "conformance/rejections/v1/sessions/wrong-document-kind.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-SESSIONS-009",
+      "documentKind": "agent-session",
+      "reason": "unsupported-payload-version",
+      "resource": "conformance/rejections/v1/sessions/unsupported-payload-version.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-001",
+      "documentKind": "workflow-checkpoint",
+      "reason": "duplicate-key",
+      "resource": "conformance/rejections/v1/workflows/duplicate-key.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-002",
+      "documentKind": "workflow-checkpoint",
+      "reason": "document-bytes",
+      "resource": "conformance/rejections/v1/workflows/document-bytes.json",
+      "limitProfile": "bytes-128"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-003",
+      "documentKind": "workflow-checkpoint",
+      "reason": "nesting-depth",
+      "resource": "conformance/rejections/v1/workflows/nesting-depth.json",
+      "limitProfile": "depth-4"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-004",
+      "documentKind": "workflow-checkpoint",
+      "reason": "string-length",
+      "resource": "conformance/rejections/v1/workflows/string-length.json",
+      "limitProfile": "string-32"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-005",
+      "documentKind": "workflow-checkpoint",
+      "reason": "numeric-token-length",
+      "resource": "conformance/rejections/v1/workflows/numeric-token-length.json",
+      "limitProfile": "number-4"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-006",
+      "documentKind": "workflow-checkpoint",
+      "reason": "collection-entries",
+      "resource": "conformance/rejections/v1/workflows/collection-entries.json",
+      "limitProfile": "collection-8"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-007",
+      "documentKind": "workflow-checkpoint",
+      "reason": "non-finite-number",
+      "resource": "conformance/rejections/v1/workflows/non-finite-number.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-008",
+      "documentKind": "workflow-checkpoint",
+      "reason": "wrong-document-kind",
+      "resource": "conformance/rejections/v1/workflows/wrong-document-kind.json",
+      "limitProfile": "structural"
+    },
+    {
+      "caseId": "JCF-REJECTIONS-WORKFLOWS-009",
+      "documentKind": "workflow-checkpoint",
+      "reason": "unsupported-payload-version",
+      "resource": "conformance/rejections/v1/workflows/unsupported-payload-version.json",
+      "limitProfile": "structural"
+    }
+  ]
+}

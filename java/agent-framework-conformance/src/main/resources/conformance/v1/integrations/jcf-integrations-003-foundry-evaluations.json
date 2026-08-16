@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-003",
+  "kind": "contract",
+  "description": "Foundry evaluations expose cloud lifecycle and project discovery without claiming the provider-neutral evaluator layer.",
+  "input": {
+    "sdk": "com.azure:azure-ai-projects:2.3.0",
+    "serviceApiVersion": "v1",
+    "evalPath": "/openai/v1/evals",
+    "discovery": ["connections", "datasets", "deployments", "indexes", "evaluators"]
+  },
+  "expected": {
+    "frameworkOwnedPublicApi": true,
+    "runHandleAndCancellation": true,
+    "pollingAndPaginationBounded": true,
+    "unknownStatusNeverSucceeds": true,
+    "evaluatorManagementMarkedPreview": true,
+    "providerNeutralEvaluatorClaimed": false,
+    "callerExecutorsRemainCallerOwned": true
+  }
+}

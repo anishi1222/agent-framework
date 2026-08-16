@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="dark light">
+    <title>Agent Framework Dev UI</title>
+    <link rel="stylesheet" href="./app.css">
+    <script src="./app.js" defer></script>
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Microsoft Agent Framework</p>
+        <h1>Developer UI</h1>
+      </div>
+      <p id="connection-status" class="status" role="status">Connecting…</p>
+    </header>
+
+    <main class="layout">
+      <aside class="panel routes-panel" aria-labelledby="routes-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">Generic hosting</p>
+            <h2 id="routes-heading">Available routes</h2>
+          </div>
+          <button id="refresh-routes" class="secondary" type="button">Refresh</button>
+        </div>
+        <div id="route-list" class="route-list" aria-live="polite"></div>
+      </aside>
+
+      <section class="panel runner-panel" aria-labelledby="runner-heading">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">JSON / SSE</p>
+            <h2 id="runner-heading">Run a hosted target</h2>
+          </div>
+        </div>
+
+        <form id="run-form">
+          <label for="target">Target</label>
+          <select id="target" name="target" required disabled>
+            <option value="">Load routes to begin</option>
+          </select>
+
+          <label for="request-json">Generic hosting request JSON</label>
+          <textarea id="request-json" name="request-json" rows="14" spellcheck="false" maxlength="65536">{
+  "version": "java-hosting-2026-08-01",
+  "messages": [
+    {
+      "role": "user",
+      "contents": [
+        {
+          "kind": "text",
+          "text": "Hello"
+        }
+      ]
+    }
+  ]
+}</textarea>
+
+          <div class="form-row">
+            <label class="check-label" for="stream-response">
+              <input id="stream-response" name="stream-response" type="checkbox" checked>
+              Stream with SSE
+            </label>
+            <div class="actions">
+              <button id="stop-run" class="secondary" type="button" disabled>Stop</button>
+              <button id="start-run" type="submit" disabled>Run</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="output-heading">
+          <h3>Response</h3>
+          <button id="clear-output" class="text-button" type="button">Clear</button>
+        </div>
+        <pre id="output" tabindex="0" aria-live="polite">Waiting for a request.</pre>
+      </section>
+    </main>
+
+    <footer>
+      Embedded assets only. Requests stay on this origin and use the generic <code>/v1</code>
+      hosting contract.
+    </footer>
+  </body>
+</html>

@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-CORE-006",
+  "kind": "contract",
+  "description": "Provider-neutral structured output preserves JSON Schema and decodes the last non-empty assistant text with bounded strict JSON.",
+  "input": {
+    "options": {
+      "name": "answer_payload",
+      "description": "One structured answer.",
+      "strict": true,
+      "schema": {
+        "type": "object",
+        "properties": {
+          "answer": {"type": "integer"}
+        },
+        "required": ["answer"],
+        "additionalProperties": false
+      }
+    },
+    "assistantMessages": [
+      {"role": "assistant", "text": "{\"answer\":1}"},
+      {"role": "assistant", "text": "   "},
+      {"role": "assistant", "text": "{\"answer\":42}"}
+    ],
+    "malformedText": "{\"answer\":",
+    "maxDocumentBytes": 32,
+    "oversizedText": "{\"answer\":\"0123456789012345678901234567890123456789\"}"
+  },
+  "expected": {
+    "decoded": {"answer": 42},
+    "schemaPreserved": true,
+    "lastNonEmptyAssistantText": true,
+    "responseMetadataPreserved": true,
+    "noAssistantTextProducesNull": true,
+    "malformedJsonRejected": true,
+    "boundedJsonEnforced": true,
+    "providerTypesInPublicApi": false
+  }
+}

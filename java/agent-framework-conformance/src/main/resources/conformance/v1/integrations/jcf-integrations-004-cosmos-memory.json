@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-INTEGRATIONS-004",
+  "kind": "contract",
+  "description": "Cosmos memory provides tenant-scoped parameterized CRUD, complete service-ordered vector/full-text/hybrid ranking, and untrusted citations.",
+  "input": {
+    "sdk": "com.azure:azure-cosmos:4.81.0",
+    "vectorPath": "/vector",
+    "fullTextPath": "/content",
+    "searchModes": ["full-text", "vector", "hybrid"],
+    "filterModel": "parameterized-metadata-equality"
+  },
+  "expected": {
+    "providerNeutralContracts": true,
+    "tenantScopeMandatory": true,
+    "etagCas": true,
+    "vectorContractValidated": true,
+    "queriesParameterized": true,
+    "legalRankGrammar": true,
+    "completeTopKPageConsumption": true,
+    "serviceOrderPreserved": true,
+    "sharedCursorCompatibility": true,
+    "primitiveScoreSentinel": true,
+    "stableListCompositeIndex": true,
+    "fallbackExplicitAndBounded": true,
+    "retrievedContentUntrusted": true,
+    "citationsPresent": true
+  }
+}

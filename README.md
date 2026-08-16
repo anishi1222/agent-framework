@@ -9,9 +9,9 @@
 [![GitHub stars](https://img.shields.io/github/stars/microsoft/agent-framework?style=social)](https://github.com/microsoft/agent-framework)
 
 
-Microsoft Agent Framework (MAF) is an open, multi-language framework for building **production-grade AI agents and multi-agent workflows** in **.NET and Python**.
+Microsoft Agent Framework (MAF) is an open, multi-language framework for building **production-grade AI agents and multi-agent workflows** in **.NET, Python, and Java 25+**.
 
-Microsoft Agent Framework is built for teams taking agents from prototype to production. It provides a consistent foundation for building, orchestrating, and operating agent systems across Python and .NET, while keeping architecture choices open as requirements evolve, and supports a broad ecosystem including Microsoft Foundry, Azure OpenAI, OpenAI, and the GitHub Copilot SDK, with samples and hosting patterns for both local development and cloud deployment.
+Microsoft Agent Framework is built for teams taking agents from prototype to production. It provides a consistent foundation for building, orchestrating, and operating agent systems across Python, .NET, and Java, while keeping architecture choices open as requirements evolve, and supports a broad ecosystem including Microsoft Foundry, Azure OpenAI, OpenAI, and the GitHub Copilot SDK, with samples and hosting patterns for both local development and cloud deployment.
 
 <p align="center">
   <a href="https://www.youtube.com/watch?v=AAgdMhftj8w" title="Watch the full Agent Framework introduction (30 min)">
@@ -37,8 +37,58 @@ MAF is a strong fit if you:
 ## Key Features
 Explore new MAF capabilities and real implementation patterns on the [official blog](https://devblogs.microsoft.com/agent-framework/).
 
-- **Python and C#/.NET Support**: Full framework support for both Python and C#/.NET implementations with consistent APIs
-  - [Python packages](./python/packages/) | [.NET source](./dotnet/src/)
+- **Python, C#/.NET, and Java Support**: Framework implementations with consistent behavioral contracts
+  - [Python packages](./python/packages/) | [.NET source](./dotnet/src/) | [Java source](./java/)
+- **Java 25 Implementation**: Provider-neutral core, tools, agents, workflows, providers,
+  observability, typed orchestrations, a bounded autonomous harness, MCP client/hosting, A2A v1
+  client/Agent/Workflow hosting, strict AG-UI 0.0.57 client and
+  Agent/Workflow/Orchestration hosting, and generic
+  JSON/SSE/WebSocket hosting with optional Spring WebFlux adapters, plus Azure AI Persistent,
+  Foundry hosting/evaluations, Content Understanding, Purview policy, Azure Cosmos DB session /
+  history / checkpoint and vector-memory storage, bounded Valkey history through official GLIDE
+  2.5.1, Mem0 Platform context through hardened JDK HTTP, GitHub Copilot CLI protocol 3, and Copilot
+  Studio Direct-to-Engine integrations, plus declarative agent/workflow loading, provider-neutral
+  evaluation, CodeAct, OpenAI Responses and Telegram hosting, DevUI, and ChatKit transport models
+  - [Java developer guide](./java/README.md) |
+    [Java getting started](./docs/java/getting-started.md) |
+    [Java migration guide](./docs/java/migration-guide.md) |
+    [Java samples](./java/samples/README.md) |
+    [Java autonomous harness](./java/agent-framework-harness/README.md) |
+    [Java orchestration guide](./java/agent-framework-orchestrations/README.md) |
+    [Java MCP client](./java/agent-framework-mcp/README.md) |
+    [Java MCP hosting](./java/agent-framework-hosting-mcp/README.md) |
+    [Java A2A client](./java/agent-framework-a2a/README.md) |
+    [Java A2A hosting](./java/agent-framework-hosting-a2a/README.md) |
+    [Java AG-UI protocol/client](./java/agent-framework-agui/README.md) |
+    [Java AG-UI hosting](./java/agent-framework-hosting-agui/README.md) |
+    [Java generic hosting](./java/agent-framework-hosting-http/README.md) |
+    [Java Spring hosting](./java/agent-framework-hosting-spring/README.md) |
+    [Java OpenAI Responses hosting](./java/agent-framework-hosting-openai/README.md) |
+    [Java Telegram hosting](./java/agent-framework-hosting-telegram/README.md) |
+    [Java declarative agents](./java/agent-framework-declarative/README.md) |
+    [Java declarative workflows](./java/agent-framework-workflows-declarative/README.md) |
+    [Java evaluation](./java/agent-framework-evaluation/README.md) |
+    [Java CodeAct](./java/agent-framework-codeact/README.md) |
+    [Java DevUI](./java/agent-framework-devui/README.md) |
+    [Java ChatKit](./java/agent-framework-chatkit/README.md) |
+    [Java Anthropic](./java/agent-framework-anthropic/README.md) |
+    [Java Bedrock](./java/agent-framework-bedrock/README.md) |
+    [Java Gemini](./java/agent-framework-gemini/README.md) |
+    [Java Mistral](./java/agent-framework-mistral/README.md) |
+    [Java Ollama](./java/agent-framework-ollama/README.md) |
+    [Java Foundry Local](./java/agent-framework-foundry-local/README.md) |
+    [Java GitHub Copilot](./java/agent-framework-github-copilot/README.md) |
+    [Java Copilot Studio](./java/agent-framework-copilotstudio/README.md) |
+    [Java Azure AI Persistent](./java/agent-framework-azure-ai-persistent/README.md) |
+    [Java Foundry hosting](./java/agent-framework-foundry-hosting/README.md) |
+    [Java Foundry evaluations](./java/agent-framework-foundry-evaluations/README.md) |
+    [Java Content Understanding](./java/agent-framework-azure-content-understanding/README.md) |
+    [Java Cosmos DB storage](./java/agent-framework-azure-cosmos/README.md) |
+    [Java Cosmos DB memory](./java/agent-framework-azure-cosmos-memory/README.md) |
+    [Java Azure AI Search](./java/agent-framework-azure-ai-search/README.md) |
+    [Java Valkey history](./java/agent-framework-valkey/README.md) |
+    [Java Mem0](./java/agent-framework-mem0/README.md) |
+    [Java Purview](./java/agent-framework-purview/README.md)
 - **Multiple Agent Provider Support**: Support for various LLM providers with more being added continuously
   - [Python examples](./python/samples/02-agents/providers/) | [.NET examples](./dotnet/samples/02-agents/AgentProviders/)
 - **Middleware**: Flexible middleware system for request/response processing, exception handling, and custom pipelines
@@ -201,6 +251,7 @@ For environment variable configuration specific to each sample, refer to the REA
 - [Contributing Guide](./CONTRIBUTING.md)
 - [Code of Conduct](./CODE_OF_CONDUCT.md)
 - [Python Development Guide](./python/DEV_SETUP.md)
+- [Java Development Guide](./java/README.md)
 - [Design Documents](./docs/design)
 - [Architectural Decision Records](./docs/decisions)
 

@@ -1,0 +1,1 @@
+{"format":"agent-framework-java-state","documentKind":"workflow-checkpoint","payloadVersion":1,"payload":{"checkpointId":"checkpoint-non-finite","bufferedInputs":[{"sourceId":"a","targetId":"b","value":Infinity}]}}

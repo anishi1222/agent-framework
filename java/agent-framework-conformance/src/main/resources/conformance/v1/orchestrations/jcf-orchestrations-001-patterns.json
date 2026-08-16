@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-ORCHESTRATIONS-001",
+  "kind": "contract",
+  "description": "The five Java orchestration patterns share deterministic, bounded, cancellation-aware runtime behavior without a cross-process resume claim.",
+  "input": {
+    "patterns": ["sequential", "concurrent", "handoff", "groupChat", "magentic"],
+    "resumeBoundary": "processLocal"
+  },
+  "expected": {
+    "deterministicEvents": true,
+    "boundedStreaming": true,
+    "cancellationPropagated": true,
+    "inputRequiredExplicit": true,
+    "crossProcessResumeClaimed": false
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-PROVIDERS-008",
+  "kind": "contract",
+  "description": "Foundry Local uses process-neutral Chat Completions plus status and model discovery without claiming a Java native SDK.",
+  "input": {
+    "request": {
+      "messages": [{"role": "user", "contents": [{"kind": "text", "text": "hello"}]}],
+      "tools": [{"name": "lookup"}],
+      "stream": true
+    },
+    "provider": "foundry-local"
+  },
+  "expected": {
+    "requestRoleOrder": ["user"],
+    "toolNames": ["lookup"],
+    "finiteResponseMapped": true,
+    "streamingUpdatesAggregate": true,
+    "fragmentedToolCallsAssembled": true,
+    "usageFinishIdentifiersMapped": true,
+    "typedErrorsPreserved": true,
+    "cancellationPropagated": true,
+    "providerTypesInSharedApi": false,
+    "capabilities": {"text": true, "modelDiscovery": true, "health": true, "nativeProcessManagement": false, "responsesApi": false},
+    "limitations": ["no Java native-management SDK", "Chat Completions only", "no binary lifecycle management"]
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "caseId": "JCF-HOSTING-TRANSPORT-001",
+  "kind": "contract",
+  "description": "Generic Java hosting exposes framework-owned bounded JSON, SSE, and WebSocket transports for registered Agents, Workflows, and Orchestrations.",
+  "input": {
+    "wireVersion": "java-hosting-2026-08-01",
+    "basePath": "/v1",
+    "collections": ["agents", "workflows", "orchestrations"],
+    "operations": ["discover", "list", "get", "run", "stream", "resume", "cancel"],
+    "webSocketPath": "/v1/ws",
+    "webSocketSubprotocol": "agent-framework-hosting.v1",
+    "webSocketClientFrames": ["start", "resume", "cancel", "demand", "close"],
+    "springAdapter": "webflux-json-sse"
+  },
+  "expected": {
+    "frameworkOwnedServerApi": true,
+    "strictJsonAndMediaValidation": true,
+    "hostOriginAndProxyValidated": true,
+    "principalAndIsolationBound": true,
+    "oneTimeProcessLocalResume": true,
+    "boundedStreamingAndFrames": true,
+    "disconnectCancellation": true,
+    "lastEventIdReplayClaimed": false,
+    "crossProcessResumeClaimed": false,
+    "springWebSocketClaimed": false,
+    "directTlsTerminationClaimed": false
+  }
+}
