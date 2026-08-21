@@ -423,7 +423,7 @@ configuration, supported mappings, ownership, and the explicit `liveTest` task.
 | Module | API / dependency | Verified version |
 |---|---|---|
 | `agent-framework-anthropic` | official Anthropic Messages Java SDK | `com.anthropic:anthropic-java:2.53.0` |
-| `agent-framework-bedrock` | AWS SDK v2 Bedrock Runtime `Converse` / `ConverseStream` | `software.amazon.awssdk:bedrockruntime:2.51.3` |
+| `agent-framework-bedrock` | AWS SDK v2 Bedrock Runtime `Converse` / `ConverseStream` | `software.amazon.awssdk:bedrockruntime:2.51.4` |
 | `agent-framework-gemini` | official Google Gen AI Java SDK | `com.google.genai:google-genai:1.65.0` |
 | `agent-framework-mistral` | Mistral `/v1/chat/completions` JSON/SSE | strict JDK HTTP |
 | `agent-framework-ollama` | Ollama `/api/chat` JSON/NDJSON | strict JDK HTTP |
