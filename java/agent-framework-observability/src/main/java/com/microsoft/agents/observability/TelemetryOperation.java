@@ -4,6 +4,7 @@ package com.microsoft.agents.observability;
 
 import com.microsoft.agents.agents.ApprovalRequiredException;
 import com.microsoft.agents.core.RunCancelledException;
+import com.microsoft.agents.core.UsageDetails;
 import io.opentelemetry.api.common.AttributeKey;
 import io.opentelemetry.api.common.Attributes;
 import io.opentelemetry.api.metrics.DoubleHistogram;
@@ -14,7 +15,9 @@ import io.opentelemetry.api.trace.StatusCode;
 import io.opentelemetry.context.Context;
 import io.opentelemetry.context.ContextKey;
 import io.opentelemetry.context.Scope;
+import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
@@ -149,6 +152,30 @@ final class TelemetryOperation {
         if (values != null && !values.isEmpty()) {
             record(() -> span.setAttribute(AttributeKey.stringArrayKey(key), values));
         }
+    }
+
+    /**
+     * Records the GenAI token-usage attributes carried by {@code usage}. Usage details that the provider
+     * did not report are omitted, and counts wider than a signed 64-bit integer are skipped because the
+     * OpenTelemetry attribute type cannot represent them.
+     */
+    void usageAttributes(UsageDetails usage) {
+        if (usage == null) {
+            return;
+        }
+        usageAttribute(GenAiAttributes.USAGE_INPUT_TOKENS, usage.inputTokens());
+        usageAttribute(GenAiAttributes.USAGE_OUTPUT_TOKENS, usage.outputTokens());
+        usageAttribute(
+                GenAiAttributes.USAGE_CACHE_CREATION_INPUT_TOKENS,
+                usage.integer(UsageDetails.CACHE_CREATION_INPUT_TOKENS));
+        usageAttribute(
+                GenAiAttributes.USAGE_CACHE_READ_INPUT_TOKENS, usage.integer(UsageDetails.CACHE_READ_INPUT_TOKENS));
+        usageAttribute(
+                GenAiAttributes.USAGE_REASONING_OUTPUT_TOKENS, usage.integer(UsageDetails.REASONING_OUTPUT_TOKENS));
+    }
+
+    private void usageAttribute(String key, Optional<BigInteger> value) {
+        value.filter(count -> count.bitLength() <= 63).ifPresent(count -> longAttribute(key, count.longValue()));
     }
 
     void event(String name, Attributes attributes) {

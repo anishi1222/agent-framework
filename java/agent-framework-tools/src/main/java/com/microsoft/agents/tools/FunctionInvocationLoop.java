@@ -13,6 +13,7 @@ import com.microsoft.agents.core.Message;
 import com.microsoft.agents.core.ResponseAggregator;
 import com.microsoft.agents.core.Role;
 import com.microsoft.agents.core.RunCancellation;
+import com.microsoft.agents.core.RunCancellationRegistration;
 import com.microsoft.agents.core.RunCancellations;
 import com.microsoft.agents.core.RunCancelledException;
 import com.microsoft.agents.core.StateValue;
@@ -38,6 +39,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Flow;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Coordinates provider turns, local function execution, approval interruption, and exactly-once
@@ -768,7 +770,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
                     || call.tool().metadata().approvalMode() != ToolApprovalMode.ALWAYS_REQUIRE) {
                 continue;
             }
-            ToolInvocationContext context = state.context(call.call(), call.invocationId());
+            ToolInvocationContext context = state.context(call.call(), call.invocationId(), state.cancellation);
             ToolApprovalRequest request = ToolApprovals.request(context, call.tool(), call.arguments());
             ApprovalSlot slot = state.registerApproval(request);
             call.approval(slot);
@@ -832,6 +834,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
             List<PreparedCall> calls,
             List<ToolApprovalDecisionRejection> rejectedDecisions,
             SingleSubscriberPublisher<ChatResponseUpdate> sink) {
+        BatchAbort abort = new BatchAbort(state.cancellation);
         List<CompletionStage<Optional<ToolInvocationResult>>> stages = new ArrayList<>(calls.size());
         boolean onlyRejected = !calls.isEmpty();
         for (PreparedCall call : calls) {
@@ -842,24 +845,26 @@ public final class FunctionInvocationLoop implements AutoCloseable {
                 continue;
             }
             if (call.duplicate()) {
-                stages.add(executeCall(state, call).thenApply(Optional::of));
+                stages.add(executeCall(state, call, abort).thenApply(Optional::of));
                 continue;
             }
             onlyRejected = false;
             if (approval != null) {
                 approval.consume();
             }
-            stages.add(executeCall(state, call).thenApply(Optional::of));
+            stages.add(executeCall(state, call, abort).thenApply(Optional::of));
         }
         final boolean batchOnlyRejected = onlyRejected;
-        return sequence(stages).thenApply(results -> {
-            List<ToolInvocationResult> newResults = new ArrayList<>();
-            for (Optional<ToolInvocationResult> optional : results) {
-                optional.filter(result -> state.markResultEmitted(result.invocationId()))
-                        .ifPresent(newResults::add);
-            }
-            return new BatchExecution(List.copyOf(newResults), batchOnlyRejected, rejectedDecisions);
-        });
+        return sequence(stages, abort)
+                .thenApply(results -> {
+                    List<ToolInvocationResult> newResults = new ArrayList<>();
+                    for (Optional<ToolInvocationResult> optional : results) {
+                        optional.filter(result -> state.markResultEmitted(result.invocationId()))
+                                .ifPresent(newResults::add);
+                    }
+                    return new BatchExecution(List.copyOf(newResults), batchOnlyRejected, rejectedDecisions);
+                })
+                .whenComplete((execution, failure) -> abort.close());
     }
 
     private CompletionStage<ToolInvocationResult> rejectCall(LogicalRunState state, PreparedCall call) {
@@ -887,7 +892,8 @@ public final class FunctionInvocationLoop implements AutoCloseable {
         return candidate.resultView;
     }
 
-    private CompletionStage<ToolInvocationResult> executeCall(LogicalRunState state, PreparedCall call) {
+    private CompletionStage<ToolInvocationResult> executeCall(
+            LogicalRunState state, PreparedCall call, BatchAbort abort) {
         InvocationSlot candidate = new InvocationSlot(call.requestDigest());
         InvocationSlot existing = state.invocations.putIfAbsent(call.invocationId(), candidate);
         if (existing != null) {
@@ -899,7 +905,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
             return existing.resultView;
         }
 
-        CompletionStage<ToolInvocationResult> execution = beginOwnedInvocation(state, call);
+        CompletionStage<ToolInvocationResult> execution = beginOwnedInvocation(state, call, abort);
         execution.whenComplete((result, failure) -> {
             if (failure != null) {
                 candidate.result.completeExceptionally(unwrap(failure));
@@ -910,7 +916,8 @@ public final class FunctionInvocationLoop implements AutoCloseable {
         return candidate.resultView;
     }
 
-    private CompletionStage<ToolInvocationResult> beginOwnedInvocation(LogicalRunState state, PreparedCall call) {
+    private CompletionStage<ToolInvocationResult> beginOwnedInvocation(
+            LogicalRunState state, PreparedCall call, BatchAbort abort) {
         if (state.cancellation.isCancellationRequested()) {
             return CompletableFuture.failedFuture(new RunCancelledException());
         }
@@ -919,14 +926,17 @@ public final class FunctionInvocationLoop implements AutoCloseable {
                     ToolInvocationResult.failed(call.invocationId(), call.call().callId(), call.preparationError()));
         }
         if (ledger == null) {
-            return invokeFunction(state, call);
+            return invokeFunction(state, call, abort);
         }
         return ledger.lookupAsync(call.invocationId())
-                .thenCompose(existing -> inspectDurableEntry(state, call, existing));
+                .thenCompose(existing -> inspectDurableEntry(state, call, abort, existing));
     }
 
     private CompletionStage<ToolInvocationResult> inspectDurableEntry(
-            LogicalRunState state, PreparedCall call, Optional<VersionedSnapshot<InvocationLedgerEntry>> existing) {
+            LogicalRunState state,
+            PreparedCall call,
+            BatchAbort abort,
+            Optional<VersionedSnapshot<InvocationLedgerEntry>> existing) {
         if (existing.isPresent()) {
             InvocationLedgerEntry entry = existing.orElseThrow().snapshot();
             if (!entry.requestDigest().equals(call.requestDigest())) {
@@ -947,7 +957,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
                 call.call().name(),
                 call.requestDigest());
         return ledger.recordPendingAsync(pending, 0)
-                .thenCompose(versioned -> invokeFunction(state, call)
+                .thenCompose(versioned -> invokeFunction(state, call, abort)
                         .thenCompose(result -> ledger.recordOutcomeAsync(
                                         new InvocationOutcome(call.invocationId(), call.requestDigest(), result),
                                         versioned.revision())
@@ -988,7 +998,8 @@ public final class FunctionInvocationLoop implements AutoCloseable {
         });
     }
 
-    private CompletionStage<ToolInvocationResult> invokeFunction(LogicalRunState state, PreparedCall call) {
+    private CompletionStage<ToolInvocationResult> invokeFunction(
+            LogicalRunState state, PreparedCall call, BatchAbort abort) {
         if (!state.tryStartToolInvocation()) {
             return CompletableFuture.completedFuture(ToolInvocationResult.failed(
                     call.invocationId(), call.call().callId(), "Error: Function invocation limit reached."));
@@ -998,7 +1009,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
         CompletionStage<StateValue> stage;
         try {
             ToolInvocationInterceptContext context = new ToolInvocationInterceptContext(
-                    tool, state.context(call.call(), call.invocationId()), arguments);
+                    tool, state.context(call.call(), call.invocationId(), abort.cancellation()), arguments);
             stage = invokeIntercepted(0, context);
         } catch (RuntimeException failure) {
             stage = CompletableFuture.failedFuture(failure);
@@ -1007,7 +1018,7 @@ public final class FunctionInvocationLoop implements AutoCloseable {
             return CompletableFuture.failedFuture(
                     new ToolInvocationException("FunctionTool.invokeAsync returned null for '" + tool.name() + "'."));
         }
-        return withCancellation(stage, state.cancellation).handle((value, failure) -> {
+        return withCancellation(stage, abort.cancellation()).handle((value, failure) -> {
             if (failure == null) {
                 return ToolInvocationResult.succeeded(
                         call.invocationId(), call.call().callId(), Objects.requireNonNull(value, "tool result"));
@@ -1239,18 +1250,39 @@ public final class FunctionInvocationLoop implements AutoCloseable {
                 .anyMatch(content -> LIMIT_MESSAGE.equals(content.text()));
     }
 
-    private static <T> CompletionStage<List<T>> sequence(List<? extends CompletionStage<? extends T>> stages) {
+    private static <T> CompletionStage<List<T>> sequence(
+            List<? extends CompletionStage<? extends T>> stages, BatchAbort abort) {
         CompletableFuture<?>[] futures =
                 stages.stream().map(CompletionStage::toCompletableFuture).toArray(CompletableFuture[]::new);
-        return CompletableFuture.allOf(futures)
-                .thenApply(ignored -> java.util.Arrays.stream(futures)
-                        .map(CompletableFuture::join)
-                        .map(value -> {
-                            @SuppressWarnings("unchecked")
-                            T cast = (T) value;
-                            return cast;
-                        })
-                        .toList());
+        // A fatal invocation failure aborts the whole batch: the in-flight siblings are cancelled so they observe
+        // cancellation at their next suspension point, and every sibling is awaited before the failure propagates so
+        // a discarded result can never land after the abort reached the caller. Cancellation stays cooperative - a
+        // synchronous tool body already running on a worker thread cannot be interrupted and may still complete its
+        // side effects, but its result never reaches the transcript, the model, or history.
+        AtomicReference<Throwable> firstFailure = new AtomicReference<>();
+        CompletableFuture<?>[] settled = new CompletableFuture<?>[futures.length];
+        for (int index = 0; index < futures.length; index++) {
+            settled[index] = futures[index].handle((ignored, failure) -> {
+                if (failure != null && firstFailure.compareAndSet(null, unwrap(failure))) {
+                    abort.abort();
+                }
+                return null;
+            });
+        }
+        return CompletableFuture.allOf(settled).thenApply(ignored -> {
+            Throwable failure = firstFailure.get();
+            if (failure != null) {
+                throw new CompletionException(failure);
+            }
+            return java.util.Arrays.stream(futures)
+                    .map(CompletableFuture::join)
+                    .map(value -> {
+                        @SuppressWarnings("unchecked")
+                        T cast = (T) value;
+                        return cast;
+                    })
+                    .toList();
+        });
     }
 
     private static Throwable unwrap(Throwable failure) {
@@ -1272,6 +1304,34 @@ public final class FunctionInvocationLoop implements AutoCloseable {
             List<ToolInvocationResult> newResults,
             boolean onlyRejected,
             List<ToolApprovalDecisionRejection> rejectedDecisions) {}
+
+    /**
+     * Scopes cancellation to one parallel tool batch so a fatal failure can abort its siblings without
+     * cancelling the caller-owned run cancellation. The batch signal also fires when the run itself is
+     * cancelled.
+     */
+    private static final class BatchAbort implements AutoCloseable {
+        private final DefaultRunCancellation cancellation = new DefaultRunCancellation();
+
+        private final RunCancellationRegistration upstream;
+
+        BatchAbort(RunCancellation runCancellation) {
+            this.upstream = RunCancellations.register(runCancellation, cancellation::cancel);
+        }
+
+        RunCancellation cancellation() {
+            return cancellation;
+        }
+
+        void abort() {
+            cancellation.cancel();
+        }
+
+        @Override
+        public void close() {
+            upstream.close();
+        }
+    }
 
     private record ResumePlan(
             List<PreparedCall> calls,
@@ -1439,9 +1499,10 @@ public final class FunctionInvocationLoop implements AutoCloseable {
             return toolMode;
         }
 
-        synchronized ToolInvocationContext context(FunctionCallContent call, InvocationId invocationId) {
+        synchronized ToolInvocationContext context(
+                FunctionCallContent call, InvocationId invocationId, RunCancellation invocationCancellation) {
             return new ToolInvocationContext(
-                    logicalRunId, call.callId(), invocationId, cancellation, owner.executor, metadata);
+                    logicalRunId, call.callId(), invocationId, invocationCancellation, owner.executor, metadata);
         }
 
         synchronized void recordTurn(ChatResponse response) {

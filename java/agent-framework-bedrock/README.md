@@ -1,7 +1,7 @@
 # Agent Framework Amazon Bedrock provider
 
 `agent-framework-bedrock` uses AWS SDK v2
-`software.amazon.awssdk:bedrockruntime:2.51.3` and the `Converse` /
+`software.amazon.awssdk:bedrockruntime:2.51.4` and the `Converse` /
 `ConverseStream` APIs. The AWS default credential provider chain and SigV4 implementation remain
 SDK-owned; credentials never enter framework options.
 

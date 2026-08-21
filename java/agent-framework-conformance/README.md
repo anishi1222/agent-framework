@@ -43,8 +43,12 @@ constraint.
   expected revision `-1`; positive revisions are opaque compare-and-set versions.
 
 To add a case, add the fixture and manifest entry, then put the exact case ID on its
-`initial-scope` matrix row when applicable. `ConformanceManifestCoverageTest` fails for unregistered
+`initial-scope` row in [`docs/java/feature-parity-matrix.md`](../../docs/java/feature-parity-matrix.md)
+when applicable. `ConformanceManifestCoverageTest` fails for unregistered
 fixtures, missing manifest resources, or matrix/manifest drift.
+`FeatureUsageRegistryCoverageTest` fails when the Java `FeatureUsageIndex` declarations and the Java
+index table in [`docs/specs/feature-usage-bit-registry.md`](../../docs/specs/feature-usage-bit-registry.md)
+drift apart.
 
 ## Validation
 

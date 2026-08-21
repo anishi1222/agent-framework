@@ -447,7 +447,7 @@
       "matrixAreas": ["AWS Bedrock"],
       "fixture": "conformance/v1/providers/jcf-providers-004-bedrock.json",
       "kind": "contract",
-      "sourceReferences": ["python/packages/bedrock", "software.amazon.awssdk:bedrockruntime:2.51.3"]
+      "sourceReferences": ["python/packages/bedrock", "software.amazon.awssdk:bedrockruntime:2.51.4"]
     },
     {
       "caseId": "JCF-PROVIDERS-005",

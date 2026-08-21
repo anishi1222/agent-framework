@@ -45,6 +45,12 @@ final class GenAiAttributes {
 
     static final String USAGE_OUTPUT_TOKENS = "gen_ai.usage.output_tokens";
 
+    static final String USAGE_CACHE_CREATION_INPUT_TOKENS = "gen_ai.usage.cache_creation.input_tokens";
+
+    static final String USAGE_CACHE_READ_INPUT_TOKENS = "gen_ai.usage.cache_read.input_tokens";
+
+    static final String USAGE_REASONING_OUTPUT_TOKENS = "gen_ai.usage.reasoning.output_tokens";
+
     static final String TOKEN_TYPE = "gen_ai.token.type";
 
     static final String ERROR_TYPE = "error.type";

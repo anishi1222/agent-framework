@@ -37,7 +37,7 @@ tasks.named("check") {
 val externalProviderSdkVersions =
     mapOf(
         "agent-framework-anthropic" to ("com.anthropic" to "2.53.0"),
-        "agent-framework-bedrock" to ("software.amazon.awssdk" to "2.51.3"),
+        "agent-framework-bedrock" to ("software.amazon.awssdk" to "2.51.4"),
         "agent-framework-gemini" to ("com.google.genai" to "1.65.0"),
         "agent-framework-mistral" to null,
         "agent-framework-ollama" to null,

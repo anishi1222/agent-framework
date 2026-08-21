@@ -247,18 +247,45 @@ only to approved first-party endpoints.
 | 74 | `hosting.openai` | OpenAI-compatible hosting endpoints | `Microsoft.AspNetCore.Builder.MicrosoftAgentAIHostingOpenAIEndpointRouteBuilderExtensions.MapOpenAIResponses` |
 | 75–127 | _reserved_ | future packages | — |
 
+## Index table — Java (`agent-framework-java`, version 1)
+
+Java allocates its own indexes and keeps the same block layout: core features
+0–31, orchestration patterns 32–47, and provider/integration packages from 48.
+Every index below is owned by a package-local `FeatureUsageIndexes` declaration
+and is marked at first meaningful activation. Indexes are still per-language;
+the values the Java port has shipped so far happen to match the Python table
+because the same features were ported first. `ConformanceManifestCoverageTest`'s
+companion check, `FeatureUsageRegistryCoverageTest`, fails when this table and
+the declared Java constants drift apart.
+
+| Index | Id | Feature | Activated at (representative) |
+| --- | --- | --- | --- |
+| 0 | `core.agent` | Agent | `com.microsoft.agents.agents.BaseAgent` |
+| 1 | _reserved_ | core growth | — |
+| 2 | `core.workflow` | Workflow engine (custom graphs) | `com.microsoft.agents.workflows.WorkflowBuilder` |
+| 3–31 | _reserved_ | core growth | — |
+| 32 | `orchestration.sequential` | Sequential orchestration | `com.microsoft.agents.orchestrations.SequentialOrchestration` |
+| 33 | `orchestration.concurrent` | Concurrent orchestration | `com.microsoft.agents.orchestrations.ConcurrentOrchestration` |
+| 34 | `orchestration.group_chat` | Group-chat orchestration | `com.microsoft.agents.orchestrations.GroupChatOrchestration` |
+| 35 | `orchestration.magentic` | Magentic orchestration | `com.microsoft.agents.orchestrations.MagenticOrchestration` |
+| 36 | `orchestration.handoff` | Handoff orchestration | `com.microsoft.agents.orchestrations.HandoffOrchestration` |
+| 37–47 | _reserved_ | orchestration growth | — |
+| 48–55 | _reserved_ | provider/integration growth | — |
+| 56 | `openai` | OpenAI clients | `com.microsoft.agents.providers.openai.OpenAIChatClient` / `OpenAIEmbeddingClient` |
+| 57–127 | _reserved_ | future packages | — |
+
 ## Opt-out
 
-The dedicated mask-only environment variable is shared by both SDKs:
+The dedicated mask-only environment variable is shared by all SDKs:
 
 - `AGENT_FRAMEWORK_FEATURE_MASK_DISABLED=true|1` — drops **only** the feature
   mask; the base `agent-framework-<lang>/{version}` User-Agent is still sent.
 
 The dedicated flag lets a privacy-conscious user keep contributing SDK
 identity/version (useful for support and compatibility triage) while withholding
-the feature-usage signal. Python's existing
-`AGENT_FRAMEWORK_USER_AGENT_DISABLED=true|1` also suppresses its entire Agent
-Framework User-Agent contribution, mask included. Adding a matching .NET
+the feature-usage signal. The existing Python and Java
+`AGENT_FRAMEWORK_USER_AGENT_DISABLED=true|1` flag also suppresses their entire
+Agent Framework User-Agent contribution, mask included. Adding a matching .NET
 whole-User-Agent opt-out is outside this design.
 
 ## Governance
