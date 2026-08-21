@@ -20,6 +20,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 
@@ -429,6 +430,60 @@ class FunctionInvocationLoopTest {
                 .map(com.microsoft.agents.core.Content::kind)
                 .toList();
         assertThat(kinds).containsSubsequence("reasoning", "functionCall", "functionResult", "text");
+    }
+
+    @Test
+    void run_shouldCancelAndAwaitSiblingInvocationsWhenOneCallFailsFatally() throws Exception {
+        // Arrange
+        CountDownLatch siblingObservedCancellation = new CountDownLatch(1);
+        AtomicBoolean siblingSettled = new AtomicBoolean();
+        FunctionTool boom = FunctionTool.create(
+                metadata("boom", ToolApprovalMode.NEVER_REQUIRE),
+                (context, arguments) -> CompletableFuture.failedFuture(new ToolInvocationException("fatal")));
+        FunctionTool sibling =
+                FunctionTool.create(metadata("sibling", ToolApprovalMode.NEVER_REQUIRE), (context, arguments) -> {
+                    CompletableFuture<StateValue> pending = new CompletableFuture<>();
+                    com.microsoft.agents.core.RunCancellations.register(context.cancellation(), () -> {
+                        siblingObservedCancellation.countDown();
+                        pending.complete(StateValue.string("cancelled"));
+                        siblingSettled.set(true);
+                    });
+                    return pending;
+                });
+        Message calls = new Message(
+                Role.ASSISTANT,
+                List.of(
+                        call("call-boom", "boom", "value", StateValue.string("one")),
+                        call("call-sibling", "sibling", "value", StateValue.string("two"))));
+        ScriptedToolTurnSource source = new ScriptedToolTurnSource().enqueue(response(calls));
+        DefaultRunCancellation runCancellation = new DefaultRunCancellation();
+        FunctionInvocationRequest request = new FunctionInvocationRequest(
+                "fatal-batch",
+                List.of(Message.text(Role.USER, "run both")),
+                FunctionInvocationOptions.defaults(),
+                runCancellation,
+                Map.of());
+
+        // Act
+        Throwable failure;
+        try (FunctionInvocationLoop loop = new FunctionInvocationLoop(source, List.of(boom, sibling))) {
+            failure = catchFailure(loop.runAsync(request).toCompletableFuture());
+        }
+
+        // Assert
+        assertThat(failure).isInstanceOf(ToolInvocationException.class).hasMessage("fatal");
+        assertThat(siblingObservedCancellation.await(0, TimeUnit.SECONDS)).isTrue();
+        assertThat(siblingSettled).isTrue();
+        assertThat(runCancellation.isCancellationRequested()).isFalse();
+    }
+
+    private static Throwable catchFailure(CompletableFuture<?> future) {
+        try {
+            future.join();
+        } catch (java.util.concurrent.CompletionException failure) {
+            return failure.getCause();
+        }
+        throw new AssertionError("Expected the run to fail.");
     }
 
     private static List<FunctionResultContent> functionResults(FunctionLoopResult result) {

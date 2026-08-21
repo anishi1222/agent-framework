@@ -207,15 +207,7 @@ public final class OpenTelemetryAgent<T> implements Agent<T> {
     }
 
     private void recordUsage(TelemetryOperation operation, UsageDetails usage) {
-        if (usage == null) {
-            return;
-        }
-        usage.inputTokens()
-                .filter(value -> value.bitLength() <= 63)
-                .ifPresent(value -> operation.longAttribute(GenAiAttributes.USAGE_INPUT_TOKENS, value.longValue()));
-        usage.outputTokens()
-                .filter(value -> value.bitLength() <= 63)
-                .ifPresent(value -> operation.longAttribute(GenAiAttributes.USAGE_OUTPUT_TOKENS, value.longValue()));
+        operation.usageAttributes(usage);
     }
 
     private static void require(List<Message> messages, RunOptions options, RunCancellation cancellation) {

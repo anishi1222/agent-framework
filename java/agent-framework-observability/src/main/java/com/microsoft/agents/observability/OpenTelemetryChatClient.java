@@ -197,12 +197,7 @@ public final class OpenTelemetryChatClient implements ChatClient {
         if (usage == null) {
             return;
         }
-        usage.inputTokens()
-                .filter(value -> value.bitLength() <= 63)
-                .ifPresent(value -> operation.longAttribute(GenAiAttributes.USAGE_INPUT_TOKENS, value.longValue()));
-        usage.outputTokens()
-                .filter(value -> value.bitLength() <= 63)
-                .ifPresent(value -> operation.longAttribute(GenAiAttributes.USAGE_OUTPUT_TOKENS, value.longValue()));
+        operation.usageAttributes(usage);
         telemetry.metrics().recordUsage(usage, operation.metricAttributes());
     }
 

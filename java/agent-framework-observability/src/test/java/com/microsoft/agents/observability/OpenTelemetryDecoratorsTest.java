@@ -98,6 +98,71 @@ class OpenTelemetryDecoratorsTest {
     }
 
     @Test
+    void chatRecordsGenAiUsageDetailAttributes() {
+        // Arrange
+        UsageDetails usage = UsageDetails.builder()
+                .inputTokens(12)
+                .outputTokens(7)
+                .integer(UsageDetails.CACHE_CREATION_INPUT_TOKENS, java.math.BigInteger.valueOf(3))
+                .integer(UsageDetails.CACHE_READ_INPUT_TOKENS, java.math.BigInteger.valueOf(5))
+                .integer(UsageDetails.REASONING_OUTPUT_TOKENS, java.math.BigInteger.valueOf(11))
+                .build();
+        ChatResponse response = ChatResponse.builder()
+                .messages(List.of(Message.text(Role.ASSISTANT, "output")))
+                .model("gpt-5.4")
+                .usage(usage)
+                .build();
+        AgentFrameworkTelemetry telemetry = telemetry().providerName("openai").build();
+        OpenTelemetryChatClient client = new OpenTelemetryChatClient(new ImmediateChatClient(response), telemetry);
+        ChatClientRequest request = new ChatClientRequest(
+                List.of(Message.text(Role.USER, "prompt")),
+                ChatOptions.builder().model("gpt-5.4").build());
+
+        // Act
+        client.completeAsync(request).toCompletableFuture().join();
+
+        // Assert
+        SpanData span = onlySpan();
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_INPUT_TOKENS)).isEqualTo(12);
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_OUTPUT_TOKENS)).isEqualTo(7);
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_CACHE_CREATION_INPUT_TOKENS))
+                .isEqualTo(3);
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_CACHE_READ_INPUT_TOKENS))
+                .isEqualTo(5);
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_REASONING_OUTPUT_TOKENS))
+                .isEqualTo(11);
+    }
+
+    @Test
+    void chatOmitsGenAiUsageDetailAttributesWhenProviderDoesNotReportThem() {
+        // Arrange
+        UsageDetails usage =
+                UsageDetails.builder().inputTokens(12).outputTokens(7).build();
+        ChatResponse response = ChatResponse.builder()
+                .messages(List.of(Message.text(Role.ASSISTANT, "output")))
+                .model("gpt-5.4")
+                .usage(usage)
+                .build();
+        AgentFrameworkTelemetry telemetry = telemetry().providerName("openai").build();
+        OpenTelemetryChatClient client = new OpenTelemetryChatClient(new ImmediateChatClient(response), telemetry);
+        ChatClientRequest request = new ChatClientRequest(
+                List.of(Message.text(Role.USER, "prompt")),
+                ChatOptions.builder().model("gpt-5.4").build());
+
+        // Act
+        client.completeAsync(request).toCompletableFuture().join();
+
+        // Assert
+        SpanData span = onlySpan();
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_CACHE_CREATION_INPUT_TOKENS))
+                .isNull();
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_CACHE_READ_INPUT_TOKENS))
+                .isNull();
+        assertThat(longAttribute(span, GenAiAttributes.USAGE_REASONING_OUTPUT_TOKENS))
+                .isNull();
+    }
+
+    @Test
     void chatDefaultsRecordConventionsWithoutSensitivePayloads() {
         // Arrange
         UsageDetails usage =
